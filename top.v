@@ -1,4 +1,4 @@
-module cpu(
+module top(
     input logic clk
 );
 endmodule
