@@ -1,0 +1,1 @@
+`define WORD 32

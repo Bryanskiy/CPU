@@ -8,6 +8,7 @@ if (NOT verilator_FOUND)
 endif()
 
 set(TARGET sim)
+set(CMAKE_CXX_STANDARD 20)
 # Create a new executable target that will contain all your sources
 add_executable(sim main.cc)
 
