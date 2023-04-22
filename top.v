@@ -7,6 +7,6 @@ module top(
     logic[(`WORD-1):0] instr;
 
     imem imem(pc, instr);
-    cpu cpu(clk);
+    cpu cpu(clk, instr, pc);
 
 endmodule

@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <memory>
 #include <span>
+#include <cassert>
 
 #include <elfio/elfio.hpp>
 #include <CLI/App.hpp>
@@ -12,7 +13,6 @@
 #include "Vtop_top.h"
 #include "Vtop_imem.h"
 #include "verilated.h"
-
 
 using Addr = std::uint32_t;
 using Word = std::uint32_t;
@@ -35,8 +35,9 @@ public:
         return static_cast<Addr>(elfFile_.get_entry());
     }
 
-    const ELFIO::segment* getSegmentPtr(IndexT index) const {
-        auto* segment = elfFile_.segments[index];
+    const ELFIO::segment *getSegmentPtr(IndexT index) const
+    {
+        auto *segment = elfFile_.segments[index];
 
         if (segment == nullptr)
             throw std::runtime_error{"Unknown segment index: " + std::to_string(index)};
@@ -44,7 +45,8 @@ public:
         return segment;
     }
 
-    std::vector<IndexT> getLoadableSegments() const {
+    std::vector<IndexT> getLoadableSegments() const
+    {
         std::vector<IndexT> res{};
         for (auto &&segment : elfFile_.segments)
             if (ELFIO::PT_LOAD == segment->get_type())
@@ -77,8 +79,10 @@ private:
     ELFIO::elfio elfFile_{};
 };
 
-struct TopModule {
-    void init(int argc, char **argv) {
+struct TopModule
+{
+    int init(int argc, char **argv)
+    {
         /* Verilator init */
         contextp = std::make_shared<VerilatedContext>();
         contextp->commandArgs(argc, argv);
@@ -90,42 +94,57 @@ struct TopModule {
         app.add_option("input", input, "Executable file")
             ->required()
             ->check(CLI::ExistingFile);
-        
+
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError &e)
+        {
+            return app.exit(e);
+        }
+
         /*  Init top module: imem, clk, entry pc */
         ELF elfLoader;
         elfLoader.load(input);
-        
-        for (auto segmentIdx : elfLoader.getLoadableSegments()) {
+
+        for (auto segmentIdx : elfLoader.getLoadableSegments())
+        {
             auto segment = elfLoader.getSegmentPtr(segmentIdx);
 
             auto fileSize = segment->get_file_size(); // in bytes
             Addr va = segment->get_virtual_address();
+            assert(va < (1 << 17 - 1) && "Failed to load data in imem");
 
-            const auto* begin = reinterpret_cast<const uint8_t*>(segment->get_data());
-            uint8_t* dst = reinterpret_cast<uint8_t*>(top->top->imem->RAM.data());
+            const auto *begin = reinterpret_cast<const uint8_t *>(segment->get_data());
+            uint8_t *dst = reinterpret_cast<uint8_t *>(top->top->imem->RAM.data());
 
             std::copy(begin, begin + fileSize, dst + va);
         }
 
         top->clk = 0;
-        
+        top->top->pc = elfLoader.getEntryPoint();
+        return 0;
     }
-    
+
     std::shared_ptr<VerilatedContext> contextp;
     std::shared_ptr<Vtop> top;
 };
 
-int main(int argc, char **argv)
+int main(int argc, char **argv) try 
 {
-    auto contextp = std::make_shared<VerilatedContext>();
-    contextp->commandArgs(argc, argv);
-    auto top = std::make_shared<Vtop>(&*contextp);
+    TopModule topModule;
+    auto res = topModule.init(argc, argv);
+    if (!res) {
+        return res;
+    }
 
-    top->clk = 0;
-    while (!contextp->gotFinish())
+    while (!topModule.contextp->gotFinish())
     {
-        top->clk += 1;
-        top->eval();
+        topModule.top->clk += 1;
+        topModule.top->eval();
     }
     return 0;
+} catch(std::runtime_error& e) {
+    std::cerr << e.what() << std::endl;
 }
