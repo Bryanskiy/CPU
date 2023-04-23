@@ -1,5 +1,5 @@
 module imem
-#(parameter IMEM_POWER = 17)
+#(parameter IMEM_POWER = 18)
 (
     input logic [(`WORD - 1):0] pc,
     output logic [(`WORD - 1):0] instr

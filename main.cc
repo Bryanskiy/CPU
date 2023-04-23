@@ -113,7 +113,7 @@ struct TopModule
 
             auto fileSize = segment->get_file_size(); // in bytes
             Addr va = segment->get_virtual_address();
-            assert(va < (1 << 17 - 1) && "Failed to load data in imem");
+            assert(va < (1 << 18 - 1) && "Failed to load data in imem");
 
             const auto *begin = reinterpret_cast<const uint8_t *>(segment->get_data());
             uint8_t *dst = reinterpret_cast<uint8_t *>(top->top->imem->RAM.data());

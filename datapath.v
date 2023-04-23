@@ -2,11 +2,31 @@ module datapath(
     input logic clk,
     input logic regWrite,
     input logic memWrite,
-    input logic[3:0] ALUControl
+    input logic[(`REG_SIZE - 1):0] rs1, rs2, rd,
+    input logic[(`ALU_CONTROL_SIZE - 1):0] ALUControl,
+
+    output logic[(`WORD - 1):0] pc,
+    output logic[(`WORD - 1):0] ALUResult
 );
-    // next PC logic
+    logic[(`WORD - 1):0] pcn;
+    logic zero;
+    /* next PC logic */
+    flopr pcreg(.clk(clk), .reset(0), .d(pcn), .q(pc)); // TODO: add reset
+    assign pcn = pc + `WORD; // TODO: jums
 
-    // register file logic
+    logic[(`WORD - 1):0] src1, src2;
+    logic[(`WORD - 1):0] wdata;
+    /* register file logic */
+    regfile regfile(
+        .raddr1(rs1),
+        .raddr2(rs2),
+        .raddr3(rd),
+        .wdata(wdata),
+        .regWrite(regWrite),
+        .rdata1(src1),
+        .rdata2(src2)
+    );
 
-    // ALU logic
+    /* ALU logic */
+    alu alu(src1, src2, ALUControl, ALUResult, zero);
 endmodule
