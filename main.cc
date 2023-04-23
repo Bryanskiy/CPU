@@ -1,7 +1,6 @@
 #include <filesystem>
 #include <cstdint>
 #include <memory>
-#include <span>
 #include <cassert>
 
 #include <elfio/elfio.hpp>

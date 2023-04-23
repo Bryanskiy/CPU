@@ -14,19 +14,19 @@ module controller(
 
     always_comb
         case (opcode)
-            LOAD: begin
+            `OPCODE_LOAD: begin
                 regWrite = 1;
                 memWrite = 0;
             end
 
-            STORE: begin
+            `OPCODE_STORE: begin
                 regWrite = 0;
                 memWrite = 1;                
             end
 
-            OP_IMM: begin
+            `OPCODE_OP_IMM: begin
                 case(func3)
-                ADDI: begin
+                `INSTR_ADDI: begin
                     regWrite = 1;
                     memWrite = 0;
                 end
@@ -34,9 +34,9 @@ module controller(
                 endcase
             end
 
-            OP: begin
+            `OPCODE_OP: begin
                 case(func3)
-                    ADD: begin
+                    `INSTR_ADD: begin
                         regWrite = 1;
                         memWrite = 0;                        
                     end
@@ -44,15 +44,15 @@ module controller(
                 endcase
             end
 
-            LUI: begin
+            `OPCODE_LUI: begin
                 regWrite = 1;
                 memWrite = 0;
             end
 
-            SYSTEM: begin
+            `OPCODE_SYSTEM: begin
                 logic[24:0] systemInstr = instr[31:7];
                 case (systemInstr)
-                    ECALL: begin end
+                    `INSTR_ECALL: begin end
                     default: begin assert(0); end
                 endcase
                     
