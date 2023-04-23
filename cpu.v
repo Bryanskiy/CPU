@@ -4,6 +4,8 @@ module cpu(
     output logic [(`WORD - 1):0] pc
 );
     logic regWrite, memWrite;
-    controller controller(instr, regWrite, memWrite);
+    logic [3:0] ALUControl;
+    controller controller(instr, regWrite, memWrite, ALUControl);
+    datapath datapath(clk, regWrite, memWrite, ALUControl);
 
 endmodule

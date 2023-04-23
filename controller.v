@@ -1,7 +1,9 @@
 module controller(
     input logic [(`WORD - 1):0] instr,
     output logic regWrite,
-    output logic memWrite
+    output logic memWrite,
+
+    output logic[3:0] ALUControl
 );
     // control
     logic[6:0] opcode = instr[6:0];
