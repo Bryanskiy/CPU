@@ -5,9 +5,24 @@ module top(
 );
     logic[(`WORD-1):0] pc /*verilator public*/;
     logic[(`WORD-1):0] instr;
-    logic[(`WORD-1):0] ALUResult;
+    logic[(`WORD-1):0] readData, writeData, ALUResult;
+    logic memWrite;
 
     imem imem(pc, instr);
-    cpu cpu(clk, instr, pc, ALUResult);
+
+    cpu cpu(
+        .clk(clk), 
+        .instr(instr), 
+        .pc(pc),
+        .writeData(writeData),
+        .ALUResult(ALUResult));
+
+    dmem dmem(
+        .clk(clk),
+        .memWrite(memWrite),
+        .address(ALUResult),
+        .wdata(writeData),
+        .readData(readData)
+    );
 
 endmodule

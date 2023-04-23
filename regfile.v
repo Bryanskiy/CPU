@@ -5,7 +5,7 @@ module regfile(
 
     output logic[(`WORD - 1):0] rdata1, rdata2
 );
-    logic[(`WORD - 1):0] GRF[(`REG_COUNT - 1):0];
+    logic[(`WORD - 1):0] GRF[(`REG_COUNT - 1):0]  /*verilator public*/;
 
     // write to GRF
     /* verilator lint_off LATCH */ always_comb begin

@@ -1,10 +1,12 @@
 module cpu(
     input logic clk,
     input logic [(`WORD - 1):0] instr,
+
     output logic [(`WORD - 1):0] pc,
-    output logic [(`WORD - 1):0] ALUResult
+    output logic [(`WORD - 1):0] ALUResult, writeData,
+    output logic memWrite
 );
-    logic regWrite, memWrite;
+    logic regWrite;
     logic [(`REG_SIZE - 1):0] rs1, rs2, rd;
     logic [(`ALU_CONTROL_SIZE - 1):0] ALUControl;
 
