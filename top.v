@@ -14,8 +14,10 @@ module top(
         .clk(clk), 
         .instr(instr), 
         .pc(pc),
+        .readData(readData),
         .writeData(writeData),
-        .ALUResult(ALUResult));
+        .ALUResult(ALUResult),
+        .memWrite(memWrite));
 
     dmem dmem(
         .clk(clk),

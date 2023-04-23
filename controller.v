@@ -1,10 +1,10 @@
 module controller(
-    input logic [(`WORD - 1):0] instr,
+    input logic[(`WORD - 1):0] instr,
 
     output logic[(`REG_SIZE - 1):0] rs1, rs2, rd,
-    output logic regWrite,
-    output logic memWrite,
-    output logic[(`ALU_CONTROL_SIZE - 1):0] ALUControl
+    output logic regWrite, memWrite, ALUSrc,
+    output logic[(`ALU_CONTROL_SIZE - 1):0] ALUControl,
+    output logic[(`WORD - 1):0] imm32
 );
     // control
     logic[6:0] opcode = instr[6:0];
@@ -15,18 +15,26 @@ module controller(
     assign rs2 = instr[24:20];
     assign rd  = instr[11:7]; 
 
+    logic[(`WORD - 1):0] i_imm32, u_imm32;
+    assign i_imm32 = {{20{instr[31]}}, instr[31:20]};
+    assign u_imm32 = {instr[31:12], 12'b0};
+
     always_comb
         case (opcode)
             `OPCODE_LOAD: begin
                 regWrite = 1;
                 memWrite = 0;
                 ALUControl = `ALU_ADD;
+                imm32 = i_imm32;
+                ALUSrc = 1;
             end
 
             `OPCODE_STORE: begin
                 regWrite = 0;
                 memWrite = 1;
-                ALUControl = `ALU_ADD;       
+                ALUControl = `ALU_ADD;
+                imm32 = i_imm32;
+                ALUSrc = 1;     
             end
 
             `OPCODE_OP_IMM: begin
@@ -35,6 +43,8 @@ module controller(
                     regWrite = 1;
                     memWrite = 0;
                     ALUControl = `ALU_ADD;
+                    imm32 = i_imm32;
+                    ALUSrc = 1;
                 end
                 default: begin assert(0); end
                 endcase
@@ -45,7 +55,8 @@ module controller(
                     `INSTR_ADD: begin
                         regWrite = 1;
                         memWrite = 0;
-                        ALUControl = `ALU_ADD;               
+                        ALUControl = `ALU_ADD;
+                        ALUSrc = 0;         
                     end
                 default: begin assert(0); end
                 endcase
@@ -54,6 +65,8 @@ module controller(
             `OPCODE_LUI: begin
                 regWrite = 1;
                 memWrite = 0;
+                imm32 = u_imm32;
+                ALUSrc = 1;
             end
 
             `OPCODE_SYSTEM: begin

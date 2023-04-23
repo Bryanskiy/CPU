@@ -7,7 +7,7 @@ module dmem
 
     output logic[(`WORD - 1):0] readData
 );
-    reg[(`WORD - 1):0] RAM[ 0 :((1 << IMEM_POWER) - 1)] /*verilator public*/;
+    reg[(`WORD - 1):0] RAM[0 :((1 << DMEM_POWER) - 1)] /*verilator public*/;
     
     always_ff @(posedge clk) begin
         if (memWrite) RAM[address] <= wdata;
