@@ -15,7 +15,7 @@ add_executable(sim main.cc)
 verilate(${TARGET}
   INCLUDE_DIRS "."
   SOURCES top.v
-  VERILATOR_ARGS -cc --exe)
+  VERILATOR_ARGS -cc --exe --trace)
 
 add_subdirectory(thirdparty)
 

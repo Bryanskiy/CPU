@@ -8,9 +8,13 @@
 #include <CLI/Config.hpp>
 #include <CLI/Formatter.hpp>
 
+#include <verilated_vcd_c.h>
 #include "Vtop.h"
 #include "Vtop_top.h"
 #include "Vtop_imem.h"
+#include "Vtop_cpu.h"
+#include "Vtop_regfile.h"
+#include "Vtop_datapath.h"
 #include "verilated.h"
 
 using Addr = std::uint32_t;
@@ -83,9 +87,13 @@ struct TopModule
     int init(int argc, char **argv)
     {
         /* Verilator init */
-        contextp = std::make_shared<VerilatedContext>();
-        contextp->commandArgs(argc, argv);
-        top = std::make_shared<Vtop>(&*contextp);
+        Verilated::commandArgs(argc, argv);
+        top = std::make_shared<Vtop>();
+
+        Verilated::traceEverOn(true);
+        vcd = std::make_unique<VerilatedVcdC>();
+        top->trace(vcd.get(), 10); // Trace 10 levels of hierarchy
+        vcd->open("out.vcd"); // Open the dump file
 
         /* Parse command line */
         CLI::App app{"Simulator"};
@@ -126,24 +134,53 @@ struct TopModule
         return 0;
     }
 
-    std::shared_ptr<VerilatedContext> contextp;
     std::shared_ptr<Vtop> top;
+    std::shared_ptr<VerilatedVcdC> vcd;
 };
 
-int main(int argc, char **argv) try 
+struct Logger
+{
+    static void RegfileStr(const uint32_t *registers)
+    {
+        std::cout << std::setfill('0');
+        constexpr std::size_t lineNum = 8;
+
+        for (std::size_t i = 0; i < lineNum; ++i)
+        {
+            for (std::size_t j = 0; j < 32 / lineNum; ++j)
+            {
+                auto regIdx = j * lineNum + i;
+                auto &reg = registers[regIdx];
+                std::cout << "  [" << std::dec << std::setw(2) << regIdx << "] ";
+                std::cout << "0x" << std::hex << std::setw(sizeof(reg) * 2) << reg;
+            }
+            std::cout << std::endl;
+        }
+    }
+};
+
+int main(int argc, char **argv)
+try
 {
     TopModule topModule;
     auto res = topModule.init(argc, argv);
-    if (!res) {
+    if (res)
+    {
         return res;
     }
 
-    while (!topModule.contextp->gotFinish())
+    auto *regfile = topModule.top->top->cpu->datapath->regfile->GRF.data();
+    vluint64_t vtime = 0;
+    while (!Verilated::gotFinish())
     {
-        topModule.top->clk += 1;
+        vtime += 1;
+        topModule.top->clk ^= 1;
         topModule.top->eval();
+        topModule.vcd->dump(vtime);
     }
     return 0;
-} catch(std::runtime_error& e) {
+}
+catch (std::runtime_error &e)
+{
     std::cerr << e.what() << std::endl;
 }

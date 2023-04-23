@@ -13,7 +13,7 @@ module datapath(
     logic[(`WORD - 1):0] pcn;
     logic zero;
     /* next PC logic */
-    flopr pcreg(.clk(clk), .reset(0), .d(pcn), .q(pc)); // TODO: add reset
+    flopr pcreg(.clk(clk), .reset(0), .d(pcn), .q(pc));
     assign pcn = pc + `WORD; // TODO: jumps
 
     /* register file logic */
