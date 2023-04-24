@@ -10,11 +10,13 @@ module datapath(
     output logic[(`WORD - 1):0] ALUResult
 );
     /* verilator lint_off UNOPTFLAT */
-    logic[(`WORD - 1):0] pcn;
+    logic[(`WORD - 1):0] pcn /*verilator public*/;
+    initial assign pc = pcn;
+
     logic zero;
     /* next PC logic */
     flopr pcreg(.clk(clk), .reset(0), .d(pcn), .q(pc));
-    assign pcn = pc + `WORD; // TODO: jumps
+    assign pcn = pc + 4; // TODO: jumps
 
     /* register file logic */
     logic[(`WORD - 1):0] src1, src2;
