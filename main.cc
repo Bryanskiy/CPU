@@ -130,7 +130,7 @@ struct TopModule
         }
 
         top->clk = 0;
-        top->top->pc = elfLoader.getEntryPoint();
+        top->top->cpu->datapath->pcn = elfLoader.getEntryPoint();
         return 0;
     }
 
@@ -174,10 +174,16 @@ try
     while (!Verilated::gotFinish())
     {
         vtime += 1;
-        topModule.top->clk ^= 1;
+        if (vtime % 8 == 0) {
+            topModule.top->clk ^= 1;
+        }
         topModule.top->eval();
         topModule.vcd->dump(vtime);
     }
+
+    topModule.top->final();
+    topModule.vcd->close();
+
     return 0;
 }
 catch (std::runtime_error &e)
