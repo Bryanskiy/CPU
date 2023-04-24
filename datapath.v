@@ -35,5 +35,10 @@ module datapath(
 
     /* ALU logic */
     assign src2 = ALUSrc ? imm32 : src2;
-    alu alu(src1, src2, ALUControl, ALUResult, zero);
+    alu alu(
+        .src1(src1), 
+        .src2(src2), 
+        .ALUControl(ALUControl), 
+        .ALUResult(ALUResult), 
+        .zero(zero));
 endmodule

@@ -7,6 +7,9 @@ module top(
     logic[(`WORD-1):0] instr;
     logic[(`WORD-1):0] readData, writeData, ALUResult;
     logic memWrite;
+    logic finish /*verilator public*/;
+
+    initial assign finish = 0;
 
     imem imem(pc, instr);
 
@@ -17,7 +20,8 @@ module top(
         .readData(readData),
         .writeData(writeData),
         .ALUResult(ALUResult),
-        .memWrite(memWrite));
+        .memWrite(memWrite),
+        .finish(finish));
 
     dmem dmem(
         .clk(clk),

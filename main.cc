@@ -93,7 +93,7 @@ struct TopModule
         Verilated::traceEverOn(true);
         vcd = std::make_unique<VerilatedVcdC>();
         top->trace(vcd.get(), 10); // Trace 10 levels of hierarchy
-        vcd->open("out.vcd"); // Open the dump file
+        vcd->open("out.vcd");      // Open the dump file
 
         /* Parse command line */
         CLI::App app{"Simulator"};
@@ -140,23 +140,38 @@ struct TopModule
 
 struct Logger
 {
-    static void RegfileStr(const uint32_t *registers)
+    struct State
     {
-        std::cout << std::setfill('0');
-        constexpr std::size_t lineNum = 8;
+        bool regWrite = 0;
+        bool memWrite = 0;
+        uint8_t regChanged;
+        uint32_t addr;
+        uint32_t data;
+        uint32_t pc;
+    };
 
-        for (std::size_t i = 0; i < lineNum; ++i)
+    void dumpChangedState(const State &st) const
+    {
+        std::cout << "-----------------------" << std::endl;
+        std::cout << "NUM=" << std::dec << instrCounter_ << std::endl;
+        if (st.regWrite)
         {
-            for (std::size_t j = 0; j < 32 / lineNum; ++j)
-            {
-                auto regIdx = j * lineNum + i;
-                auto &reg = registers[regIdx];
-                std::cout << "  [" << std::dec << std::setw(2) << regIdx << "] ";
-                std::cout << "0x" << std::hex << std::setw(sizeof(reg) * 2) << reg;
-            }
-            std::cout << std::endl;
+            std::cout << "x" << st.regChanged << "=0x" << std::hex << st.data << std::endl;
         }
+        else if (st.memWrite)
+        {
+            std::cout << "M[" << std::hex << st.addr << "]=0x" << std::hex << st.data << std::endl;
+        }
+        std::cout << "PC=0x" << std::hex << st.pc << std::endl;
     }
+
+    void next()
+    {
+        instrCounter_ += 1;
+    }
+
+private:
+    uint32_t instrCounter_ = 1;
 };
 
 int main(int argc, char **argv)
@@ -171,12 +186,34 @@ try
 
     auto *regfile = topModule.top->top->cpu->datapath->regfile->GRF.data();
     vluint64_t vtime = 0;
+    Logger logger;
+    uint32_t prevpc = topModule.top->top->cpu->datapath->pcn;
     while (!Verilated::gotFinish())
     {
         vtime += 1;
-        if (vtime % 8 == 0) {
+        if (vtime % 8 == 0)
+        {
             topModule.top->clk ^= 1;
+
+            Logger::State st{
+                0,                     // regWrite
+                0,                     // memWrite
+                0,                     // regChanged
+                0,                     // addr
+                0,                     // data
+                topModule.top->top->pc // pc
+            };
+            if ((topModule.top->top->pc != prevpc) && !topModule.top->clk)
+            {
+                logger.dumpChangedState(st);
+                logger.next();
+            }
+            if (topModule.top->top->finish && topModule.top->clk)
+            {
+                break;
+            }
         }
+
         topModule.top->eval();
         topModule.vcd->dump(vtime);
     }

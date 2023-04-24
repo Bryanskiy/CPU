@@ -1,6 +1,6 @@
 module regfile(
     input clk,
-    input logic[(`REG_SIZE - 1):0] raddr1, raddr2, raddr3,
+    input logic[(`REG_SIZE - 1):0] raddr1, raddr2, raddr3 /*verilator public*/,
     input logic[(`WORD - 1):0] wdata,
     input logic regWrite,
 

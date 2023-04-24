@@ -4,7 +4,8 @@ module controller(
     output logic[(`REG_SIZE - 1):0] rs1, rs2, rd,
     output logic regWrite, memWrite, ALUSrc,
     output logic[(`ALU_CONTROL_SIZE - 1):0] ALUControl,
-    output logic[(`WORD - 1):0] imm32
+    output logic[(`WORD - 1):0] imm32,
+    output logic finish
 );
     // control
     logic[6:0] opcode = instr[6:0];
@@ -72,7 +73,9 @@ module controller(
             `OPCODE_SYSTEM: begin
                 logic[24:0] systemInstr = instr[31:7];
                 case (systemInstr)
-                    `INSTR_ECALL: begin end
+                    `INSTR_ECALL: begin 
+                        finish = 1;
+                    end
                     default: begin assert(0); end
                 endcase
                     

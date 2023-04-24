@@ -5,7 +5,8 @@ module cpu(
 
     output logic[(`WORD - 1):0] pc,
     output logic[(`WORD - 1):0] ALUResult, writeData,
-    output logic memWrite
+    output logic memWrite,
+    output logic finish
 );
     logic regWrite, ALUSrc;
     logic[(`REG_SIZE - 1):0] rs1, rs2, rd;
@@ -21,7 +22,8 @@ module cpu(
         .rs2(rs2), 
         .rd(rd), 
         .ALUControl(ALUControl),
-        .imm32(imm32)
+        .imm32(imm32),
+        .finish(finish)
     );
 
     datapath datapath(
