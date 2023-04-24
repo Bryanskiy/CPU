@@ -8,8 +8,8 @@ module cpu(
     output logic memWrite,
     output logic finish
 );
-    logic regWrite, ALUSrc;
-    logic[(`REG_SIZE - 1):0] rs1, rs2, rd;
+    logic regWrite /*verilator public*/, ALUSrc, mem2reg;
+    logic[(`REG_SIZE - 1):0] rs1, rs2, rd  /*verilator public*/;
     logic[(`ALU_CONTROL_SIZE - 1):0] ALUControl;
     logic[(`WORD - 1):0] imm32;
 
@@ -18,6 +18,7 @@ module cpu(
         .regWrite(regWrite), 
         .memWrite(memWrite),
         .ALUSrc(ALUSrc),
+        .mem2reg(mem2reg),
         .rs1(rs1),
         .rs2(rs2), 
         .rd(rd), 
@@ -31,6 +32,7 @@ module cpu(
         .regWrite(regWrite),
         .memWrite(memWrite),
         .ALUSrc(ALUSrc),
+        .mem2reg(mem2reg),
         .readData(readData),
         .imm32(imm32),
         .rs1(rs1),
@@ -38,5 +40,6 @@ module cpu(
         .rd(rd),
         .ALUControl(ALUControl),
         .pc(pc),
+        .writeData(writeData),
         .ALUResult(ALUResult));
 endmodule

@@ -12,6 +12,7 @@
 #include "Vtop.h"
 #include "Vtop_top.h"
 #include "Vtop_imem.h"
+#include "Vtop_dmem.h"
 #include "Vtop_cpu.h"
 #include "Vtop_regfile.h"
 #include "Vtop_datapath.h"
@@ -129,7 +130,8 @@ struct TopModule
             std::copy(begin, begin + fileSize, dst + va);
         }
 
-        top->clk = 0;
+        top->clk = 1;
+
         top->top->cpu->datapath->pcn = elfLoader.getEntryPoint();
         return 0;
     }
@@ -144,7 +146,7 @@ struct Logger
     {
         bool regWrite = 0;
         bool memWrite = 0;
-        uint8_t regChanged;
+        uint32_t regChanged;
         uint32_t addr;
         uint32_t data;
         uint32_t pc;
@@ -156,7 +158,7 @@ struct Logger
         std::cout << "NUM=" << std::dec << instrCounter_ << std::endl;
         if (st.regWrite)
         {
-            std::cout << "x" << st.regChanged << "=0x" << std::hex << st.data << std::endl;
+            std::cout << "x" << std::dec << st.regChanged << "=0x" << std::hex << st.data << std::endl;
         }
         else if (st.memWrite)
         {
@@ -185,26 +187,44 @@ try
     }
 
     auto *regfile = topModule.top->top->cpu->datapath->regfile->GRF.data();
+    auto *dmem = topModule.top->top->dmem->RAM.data();
     vluint64_t vtime = 0;
     Logger logger;
-    uint32_t prevpc = topModule.top->top->cpu->datapath->pcn;
+
+    bool prevMemWrite = false;
+    bool prevRegWrite = false;
+    uint32_t prevReg = 256;
+    uint64_t prevAddr = 0;
     while (!Verilated::gotFinish())
     {
         vtime += 1;
         if (vtime % 8 == 0)
         {
             topModule.top->clk ^= 1;
-
-            Logger::State st{
-                0,                     // regWrite
-                0,                     // memWrite
-                0,                     // regChanged
-                0,                     // addr
-                0,                     // data
-                topModule.top->top->pc // pc
-            };
-            if ((topModule.top->top->pc != prevpc) && !topModule.top->clk)
+            if ((!topModule.top->clk) && (vtime != 8))
             {
+                Logger::State st{
+                    0,                     // regWrite
+                    0,                     // memWrite
+                    10000,                 // regChanged (invalid by default)
+                    0,                     // addr (invalid by default)
+                    0,                     // data
+                    topModule.top->top->pc // pc
+                };
+
+                if (prevMemWrite)
+                {
+                    st.memWrite = prevMemWrite;
+                    st.data = dmem[prevAddr >> 2];
+                    st.addr = prevAddr;
+                }
+
+                if (prevRegWrite) {
+                    st.regWrite = prevRegWrite;
+                    st.data = regfile[prevReg];
+                    st.regChanged = prevReg;
+                }
+
                 logger.dumpChangedState(st);
                 logger.next();
             }
@@ -212,8 +232,12 @@ try
             {
                 break;
             }
-        }
 
+            prevMemWrite = topModule.top->top->memWrite;
+            prevRegWrite = topModule.top->top->cpu->regWrite;
+            prevReg = topModule.top->top->cpu->rd;
+            prevAddr = topModule.top->top->ALUResult;
+        }
         topModule.top->eval();
         topModule.vcd->dump(vtime);
     }
