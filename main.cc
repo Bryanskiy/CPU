@@ -158,13 +158,13 @@ struct Logger
         std::cout << "NUM=" << std::dec << instrCounter_ << std::endl;
         if (st.regWrite)
         {
-            std::cout << "x" << std::dec << st.regChanged << "=0x" << std::hex << st.data << std::endl;
+            std::cout << "x" << std::dec << st.regChanged << "=0x" << std::hex << std::setfill('0') << std::setw(8) << st.data << std::endl;
         }
         else if (st.memWrite)
         {
-            std::cout << "M[" << std::hex << st.addr << "]=0x" << std::hex << st.data << std::endl;
+            std::cout << "M[0x" << std::hex << st.addr << "]=0x" << std::hex << std::setw(8) << std::setfill('0') << st.data << std::endl;
         }
-        std::cout << "PC=0x" << std::hex << st.pc << std::endl;
+        std::cout << "PC=0x" << std::hex << std::setw(8) << std::setfill('0') << st.pc << std::endl;
     }
 
     void next()
@@ -201,17 +201,16 @@ try
         if (vtime % 8 == 0)
         {
             topModule.top->clk ^= 1;
+            Logger::State st{
+                0,                     // regWrite
+                0,                     // memWrite
+                10000,                 // regChanged (invalid by default)
+                0,                     // addr (invalid by default)
+                0,                     // data
+                topModule.top->top->pc // pc
+            };
             if ((!topModule.top->clk) && (vtime != 8))
             {
-                Logger::State st{
-                    0,                     // regWrite
-                    0,                     // memWrite
-                    10000,                 // regChanged (invalid by default)
-                    0,                     // addr (invalid by default)
-                    0,                     // data
-                    topModule.top->top->pc // pc
-                };
-
                 if (prevMemWrite)
                 {
                     st.memWrite = prevMemWrite;
@@ -219,7 +218,8 @@ try
                     st.addr = prevAddr;
                 }
 
-                if (prevRegWrite) {
+                if (prevRegWrite)
+                {
                     st.regWrite = prevRegWrite;
                     st.data = regfile[prevReg];
                     st.regChanged = prevReg;
@@ -230,11 +230,13 @@ try
             }
             if (topModule.top->top->finish && topModule.top->clk)
             {
+                st.pc += 4; // sim2022 dump pc+4 after ecall
+                logger.dumpChangedState(st);              
                 break;
             }
 
             prevMemWrite = topModule.top->top->memWrite;
-            prevRegWrite = topModule.top->top->cpu->regWrite;
+            prevRegWrite = topModule.top->top->cpu->regWrite && !topModule.top->top->cpu->Jump;
             prevReg = topModule.top->top->cpu->rd;
             prevAddr = topModule.top->top->ALUResult;
         }

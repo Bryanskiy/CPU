@@ -8,7 +8,7 @@ module cpu(
     output logic memWrite,
     output logic finish
 );
-    logic regWrite /*verilator public*/, mem2reg, Jump, Branch;
+    logic regWrite /*verilator public*/, mem2reg, Jump /*verilator public*/, Branch /*verilator public*/;
     logic[(`ALU_SRC_SIZE - 1):0] ALUSrc1, ALUSrc2;
     logic[(`REG_SIZE - 1):0] rs1, rs2, rd  /*verilator public*/;
     logic[(`ALU_CONTROL_SIZE - 1):0] ALUControl;
