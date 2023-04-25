@@ -1,6 +1,7 @@
 module datapath(
     input logic clk,
-    input logic regWrite, memWrite, ALUSrc, mem2reg,
+    input logic regWrite, memWrite, mem2reg, Jump, Branch,
+    input logic[(`ALU_SRC_SIZE -1):0] ALUSrc1, ALUSrc2,
     input logic[(`REG_SIZE - 1):0] rs1, rs2, rd,
     input logic[(`ALU_CONTROL_SIZE - 1):0] ALUControl,
     input logic[(`WORD - 1):0] readData,
@@ -11,16 +12,18 @@ module datapath(
     output logic[(`WORD - 1):0] ALUResult
 );
     /* verilator lint_off UNOPTFLAT */
-    logic[(`WORD - 1):0] pcn /*verilator public*/;
+    logic[(`WORD - 1):0] pcn /*verilator public*/, pcPlus4, pcJump;
     initial assign pc = pcn;
 
     logic zero;
     /* next PC logic */
     flopr pcreg(.clk(clk), .reset(0), .d(pcn), .q(pc));
-    assign pcn = pc + 4; // TODO: jumps
+    assign pcPlus4 = pc + 4;
+    assign pcJump = pc + imm32;
 
+    assign pcn = Jump ? pcJump : (Branch ? (zero ? pcJump : pcPlus4) : pcPlus4);
     /* register file logic */
-    logic[(`WORD - 1):0] src1, src2;
+    logic[(`WORD - 1):0] rdata1, rdata2;
     logic[(`WORD - 1):0] result = mem2reg ? readData : ALUResult;
 
     regfile regfile(
@@ -30,16 +33,27 @@ module datapath(
         .raddr3(rd),
         .wdata(result),
         .regWrite(regWrite),
-        .rdata1(src1),
-        .rdata2(src2)
+        .rdata1(rdata1),
+        .rdata2(rdata2)
     );
 
     /* ALU logic */
-    assign writeData = src2;
-    logic[(`WORD - 1):0] srcB = ALUSrc ? imm32 : src2;
+    assign writeData = rdata2;
+    logic[(`WORD - 1):0] src1, src2;
+    alucontroller alucontroller(
+        .ALUSrc1(ALUSrc1),
+        .ALUSrc2(ALUSrc2),
+        .rs1(rdata1),
+        .rs2(rdata2),
+        .pc(pc),
+        .imm32(imm32),
+        .src1(src1), 
+        .src2(src2)        
+    );
+
     alu alu(
         .src1(src1), 
-        .src2(srcB), 
+        .src2(src2), 
         .ALUControl(ALUControl), 
         .ALUResult(ALUResult), 
         .zero(zero));
