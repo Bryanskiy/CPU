@@ -1,5 +1,5 @@
 module dmem
-#(parameter DMEM_POWER = 30)
+#(parameter DMEM_POWER = 18)
 (
     input logic clk,
     input logic memWrite,

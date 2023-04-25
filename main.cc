@@ -215,7 +215,7 @@ try
                 if (prevMemWrite)
                 {
                     st.memWrite = prevMemWrite;
-                    st.data = dmem[prevAddr >> 2];
+                    st.data = dmem[(prevAddr >> 2) - 0x3FFF0000];
                     st.addr = prevAddr;
                 }
 

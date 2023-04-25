@@ -28,7 +28,7 @@ module top(
     dmem dmem(
         .clk(clk),
         .memWrite(memWrite),
-        .address(ALUResult >> 2),
+        .address((ALUResult >> 2) - `DMEM_OFFSET),
         .wdata(writeData),
         .readData(readData)
     );

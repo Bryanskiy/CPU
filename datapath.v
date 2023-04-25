@@ -35,13 +35,12 @@ module datapath(
     );
 
     /* ALU logic */
-    assign src2 = ALUSrc ? imm32 : src2;
+    assign writeData = src2;
+    logic[(`WORD - 1):0] srcB = ALUSrc ? imm32 : src2;
     alu alu(
         .src1(src1), 
-        .src2(src2), 
+        .src2(srcB), 
         .ALUControl(ALUControl), 
         .ALUResult(ALUResult), 
         .zero(zero));
-
-    assign writeData = ALUResult;
 endmodule
