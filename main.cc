@@ -236,7 +236,7 @@ try
             }
 
             prevMemWrite = topModule.top->top->memWrite;
-            prevRegWrite = topModule.top->top->cpu->regWrite && !topModule.top->top->cpu->Jump;
+            prevRegWrite = topModule.top->top->cpu->regWrite;
             prevReg = topModule.top->top->cpu->rd;
             prevAddr = topModule.top->top->ALUResult;
         }

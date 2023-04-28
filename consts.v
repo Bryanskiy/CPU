@@ -48,5 +48,10 @@
 `define ALU_SRC_PC        2'b10
 `define ALU_SRC_PC_PLUS_4 2'b11
 
+`define ALU_NPC_4         2'b00
+`define ALU_NPC_BRANCH    2'b11
+`define ALU_NPC_JAL       2'b01
+`define ALU_NPC_JALR      2'b10
+
 `define ALU_ADD `ALU_CONTROL_SIZE'b0
 `define ALU_SLT `ALU_CONTROL_SIZE'b1

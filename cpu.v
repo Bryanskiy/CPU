@@ -8,18 +8,18 @@ module cpu(
     output logic memWrite,
     output logic finish
 );
-    logic regWrite /*verilator public*/, mem2reg, Jump /*verilator public*/, Branch /*verilator public*/;
+    logic regWrite /*verilator public*/, mem2reg;
     logic[(`ALU_SRC_SIZE - 1):0] ALUSrc1, ALUSrc2;
     logic[(`REG_SIZE - 1):0] rs1, rs2, rd  /*verilator public*/;
     logic[(`ALU_CONTROL_SIZE - 1):0] ALUControl;
     logic[(`WORD - 1):0] imm32;
+    logic[1:0] pcnControl;
 
     controller controller(
         .instr(instr), 
         .regWrite(regWrite), 
         .memWrite(memWrite),
-        .Jump(Jump),
-        .Branch(Branch),
+        .pcnControl(pcnControl),
         .ALUSrc1(ALUSrc1),
         .ALUSrc2(ALUSrc2),       
         .mem2reg(mem2reg),
@@ -35,8 +35,7 @@ module cpu(
         .clk(clk),
         .regWrite(regWrite),
         .memWrite(memWrite),
-        .Jump(Jump),
-        .Branch(Branch),
+        .pcnControl(pcnControl),
         .ALUSrc1(ALUSrc1),
         .ALUSrc2(ALUSrc2),        
         .mem2reg(mem2reg),
