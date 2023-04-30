@@ -70,6 +70,16 @@ module controller(
                 pcnControl = `ALU_NPC_JAL;
             end
 
+            `OPCODE_JALR: begin
+                regWrite = 1;
+                memWrite = 0;
+                imm32 = i_imm32;                
+                ALUControl = `ALU_ADD;
+                ALUSrc2 = `ALU_SRC_PC_PLUS_4;
+                ALUSrc1 = `ALU_SRC_PC;
+                pcnControl = `ALU_NPC_JALR;
+            end
+
             `OPCODE_OP_IMM: begin
                 mem2reg = 0;
                 regWrite = 1;
