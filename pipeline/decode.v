@@ -7,6 +7,7 @@ module decode(
     input logic[(`WORD-1):0] resultW,
 
     output logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE,
+    output logic[(`REG_SIZE - 1):0] writeRegE,
     output logic[3:0] ALUControlE,
     output logic[1:0] ALUSrcE,
     output logic regWriteE, memWriteE, mem2regE
@@ -36,10 +37,11 @@ module decode(
     immsel immsel(.instr(instrD), .imm(immD));
 
     /* regfile logic: write back + read data for exec stage */
-    logic[(`REG_SIZE - 1):0] rs1, rs2, rd;
+    logic[(`REG_SIZE - 1):0] rs1, rs2, rd, writeRegD;
     assign rs1 = instrD[19:15];
     assign rs2 = instrD[24:20];
     assign rd  = instrD[11:7];
+    assign writeRegD = rd;
 
     logic[(`WORD - 1):0] rdata1D, rdata2D;
 
@@ -55,7 +57,7 @@ module decode(
     );
 
     /* decode register */
-    localparam DECODE_REG_SIZE = 4 * `WORD + 9; // size of output module params 
+    localparam DECODE_REG_SIZE = 4 * `WORD + 9 + `REG_SIZE; // size of output module params 
     logic[(DECODE_REG_SIZE-1):0] decregd, decregq;
     assign decregd = {
         regWriteD,
@@ -63,12 +65,13 @@ module decode(
         mem2regD,
         ALUControlD,
         ALUSrcD,
+        writeRegD,
         rdata1D,
         rdata2D,
         immD,
         pcD
     };
-    flopr #(.WIDTH(DECODE_REG_SIZE)) fetchreg(.clk(clk), .reset(reset), .d(decregd), .q(decregq));
+    flopr #(.WIDTH(DECODE_REG_SIZE)) decodereg(.clk(clk), .reset(reset), .d(decregd), .q(decregq));
     
     /* output for exec stage */
     assign {
@@ -77,6 +80,7 @@ module decode(
         mem2regE,
         ALUControlE,
         ALUSrcE,
+        writeRegE,
         rdata1E,
         rdata2E,
         immE,
@@ -116,12 +120,12 @@ module maindec(
                 regWrite = 1;
                 memWrite = 0;
                 mem2reg = 0;    
-             end
+            end
             `OPCODE_LUI: begin
                 regWrite = 1;
                 memWrite = 0;
                 mem2reg = 0;                
-             end
+            end
             `OPCODE_BRANCH: begin
                 regWrite = 0;
                 memWrite = 0;

@@ -17,6 +17,7 @@ module riscv(
                                 DECODE
 =========================================================================*/
     logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE;
+    logic[(`REG_SIZE - 1):0] writeRegE;
     logic[3:0] ALUControlE;
     logic[1:0] ALUSrcE;
     logic regWriteE, memWriteE, mem2regE;
@@ -32,6 +33,7 @@ module riscv(
         .resultW(resultW),
         .rdata1E(rdata1E),
         .rdata2E(rdata2E),
+        .writeRegE(writeRegE),
         .immE(immE),
         .pcE(pcE),
         .ALUControlE(ALUControlE),
@@ -39,6 +41,33 @@ module riscv(
         .regWriteE(regWriteE),
         .memWriteE(memWriteE),
         .mem2regE(mem2regE)
+    );
+
+/*=======================================================================
+                                EXECUTE
+=========================================================================*/
+    logic[(`WORD - 1):0] writeDataM, ALUResultM, pcM;
+    logic[(`REG_SIZE - 1):0] writeRegM;
+    logic zeroM;
+    execute execute(
+        .clk(clk),
+        .reset(reset),
+        .rdata1E(rdata1E), 
+        .rdata2E(rdata2E), 
+        .immE(immE), 
+        .pcE(pcE),
+        .writeRegE(writeRegE),
+        .ALUControlE(ALUControlE),
+        .ALUSrcE(ALUSrcE),
+        .regWriteE(regWriteE), 
+        .memWriteE(memWriteE), 
+        .mem2regE(mem2regE),
+
+        .writeDataM(writeDataM), 
+        .writeRegM(writeRegM), 
+        .ALUResultM(ALUResultM), 
+        .pcM(pcM),
+        .zeroM(zeroM)
     );
 
 endmodule
