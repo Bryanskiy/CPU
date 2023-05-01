@@ -17,6 +17,8 @@ module riscv(
                                 DECODE
 =========================================================================*/
     logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE;
+    logic[3:0] ALUControlE;
+    logic[1:0] ALUSrcE;
     logic regWriteE, memWriteE, mem2regE;
 
     logic regWriteW;
@@ -32,6 +34,8 @@ module riscv(
         .rdata2E(rdata2E),
         .immE(immE),
         .pcE(pcE),
+        .ALUControlE(ALUControlE),
+        .ALUSrcE(ALUSrcE),
         .regWriteE(regWriteE),
         .memWriteE(memWriteE),
         .mem2regE(mem2regE)

@@ -7,6 +7,8 @@ module decode(
     input logic[(`WORD-1):0] resultW,
 
     output logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE,
+    output logic[3:0] ALUControlE,
+    output logic[1:0] ALUSrcE,
     output logic regWriteE, memWriteE, mem2regE
 );
     /* instruction decode */
@@ -19,6 +21,15 @@ module decode(
         .regWrite(regWriteD),
         .memWrite(memWriteD),
         .mem2reg(mem2regD)
+    );
+
+    logic[3:0] ALUControlD;
+    logic[1:0] ALUSrcD;
+    aludec aludec(
+        .opcode(opcode),
+        .func3(func3),
+        .ALUControl(ALUControlD),
+        .ALUSrc(ALUSrcD)
     );
 
     logic[(`WORD-1):0] immD;
@@ -44,12 +55,14 @@ module decode(
     );
 
     /* decode register */
-    localparam DECODE_REG_SIZE = 4 * `WORD + 3; // size of output module params 
+    localparam DECODE_REG_SIZE = 4 * `WORD + 9; // size of output module params 
     logic[(DECODE_REG_SIZE-1):0] decregd, decregq;
     assign decregd = {
         regWriteD,
         memWriteD,
         mem2regD,
+        ALUControlD,
+        ALUSrcD,
         rdata1D,
         rdata2D,
         immD,
@@ -62,6 +75,8 @@ module decode(
         regWriteE,
         memWriteE,
         mem2regE,
+        ALUControlE,
+        ALUSrcE,
         rdata1E,
         rdata2E,
         immE,
@@ -127,8 +142,54 @@ module maindec(
                 regWrite = 0;
                 memWrite = 0;
                 mem2reg = 0; 
-                $display("Warning: invalid ocode %b", opcode);
+                $display("Warning: invalid opcode %b", opcode);
             end
+        endcase
+endmodule
+
+module aludec(
+    input logic[6:0] opcode,
+    input logic[2:0] func3,
+
+    output logic[3:0] ALUControl,
+    output logic[1:0] ALUSrc
+);
+    always_comb
+        case(opcode)
+            `OPCODE_LOAD, `OPCODE_LUI, `OPCODE_STORE: begin
+                ALUControl = `ALU_ADD;
+                ALUSrc = `ALU_SRC_IMM;
+            end
+
+            `OPCODE_JAL, `OPCODE_JALR: begin
+                ALUControl = `ALU_ADD;
+                ALUSrc = `ALU_SRC_PC_PLUS_4;
+            end
+
+            `OPCODE_BRANCH: begin
+                ALUSrc = `ALU_SRC_RD2;
+                case (func3)
+                    3'b000, 3'b001:
+                        ALUControl = `ALU_SUB; // beq, bne
+                    3'b100, 3'b101:
+                        ALUControl = `ALU_SLT; // blt, bge
+                    3'b110, 3'b111:
+                        ALUControl = `ALU_SLTU; // bltu, bgeu
+
+                    default: ALUControl = 4'bxxxx;                        
+                endcase
+            end
+
+            `OPCODE_OP, `OPCODE_OP_IMM: begin
+                ALUSrc = (opcode == `OPCODE_OP) ? `ALU_SRC_RD2 : `ALU_SRC_IMM; 
+                case (func3)
+                    3'b000: ALUControl = `ALU_ADD;
+
+                    default: ALUControl = 4'bxxxx;
+                endcase
+            end
+            default:
+                ALUControl = 4'bxxxx;
         endcase
 endmodule
 
