@@ -18,7 +18,8 @@ module fetch
 
     /* fetch register */
     logic[(2 * `WORD-1):0] fetchregd, fetchregq;
-    assign fetchregd = {pc + 4, instr};
+    assign fetchregd = {pc, instr};
+    initial assign fetchregq = fetchregd;
     flopr #(.WIDTH(2 * `WORD)) fetchreg(.clk(clk), .reset(reset), .d(fetchregd), .q(fetchregq));
 
     /* return values for DECODE stage */
