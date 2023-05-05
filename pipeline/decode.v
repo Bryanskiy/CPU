@@ -10,10 +10,12 @@ module decode(
     output logic[(`REG_SIZE - 1):0] writeRegE,
     output logic[3:0] ALUControlE,
     output logic[1:0] ALUSrcE,
-    output logic regWriteE, memWriteE, mem2regE
+    output logic regWriteE, memWriteE, mem2regE,
+    output logic branchE
 );
     /* instruction decode */
     logic regWriteD, memWriteD, mem2regD;
+    logic branchD;
 
     logic[6:0] opcode = instrD[6:0];
     logic[2:0] func3 = instrD[14:12];
@@ -21,7 +23,8 @@ module decode(
         .opcode(opcode),
         .regWrite(regWriteD),
         .memWrite(memWriteD),
-        .mem2reg(mem2regD)
+        .mem2reg(mem2regD),
+        .branch(branchD)
     );
 
     logic[3:0] ALUControlD;
@@ -92,7 +95,8 @@ endmodule
 module maindec(
     input logic[6:0] opcode,
 
-    output logic regWrite, memWrite, mem2reg
+    output logic regWrite, memWrite, mem2reg,
+    output logic branch
 );
     always_comb
         case(opcode)
@@ -100,52 +104,62 @@ module maindec(
                 regWrite = 1;
                 memWrite = 0;
                 mem2reg = 1;
+                branch = 0;
             end
             `OPCODE_STORE: begin
                 regWrite = 0;
                 memWrite = 1;
                 mem2reg = 0;
+                branch = 0;
              end
             `OPCODE_SYSTEM: begin
                 regWrite = 0;
                 memWrite = 0;
                 mem2reg = 0;
+                branch = 0;
              end
             `OPCODE_OP_IMM: begin 
                 regWrite = 1;
                 memWrite = 0;
-                mem2reg = 0;                
+                mem2reg = 0;
+                branch = 0;                
             end
             `OPCODE_OP: begin
                 regWrite = 1;
                 memWrite = 0;
-                mem2reg = 0;    
+                mem2reg = 0;
+                branch = 0;
             end
             `OPCODE_LUI: begin
                 regWrite = 1;
                 memWrite = 0;
-                mem2reg = 0;                
+                mem2reg = 0;
+                branch = 0;
             end
             `OPCODE_BRANCH: begin
                 regWrite = 0;
                 memWrite = 0;
-                mem2reg = 0; 
+                mem2reg = 0;
+                branch = 1; 
             end
             `OPCODE_JAL: begin
                 regWrite = 1;
                 memWrite = 0;
-                mem2reg = 0; 
+                mem2reg = 0;
+                branch = 0;
             end
             `OPCODE_JALR: begin
                 regWrite = 1;
                 memWrite = 0;
-                mem2reg = 0;                 
+                mem2reg = 0;
+                branch = 0;                
             end
 
             default: begin
                 regWrite = 0;
                 memWrite = 0;
-                mem2reg = 0; 
+                mem2reg = 0;
+                branch = 0;
                 $display("Warning: invalid opcode %b", opcode);
             end
         endcase
