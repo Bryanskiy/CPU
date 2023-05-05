@@ -160,7 +160,6 @@ module maindec(
                 memWrite = 0;
                 mem2reg = 0;
                 branch = 0;
-                $display("Warning: invalid opcode %b", opcode);
             end
         endcase
 endmodule

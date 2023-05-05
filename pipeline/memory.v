@@ -9,7 +9,7 @@ module memory
 
     output logic[(`WORD - 1):0] readDataW, ALUResultW,
     output logic[(`REG_SIZE - 1):0] writeRegW,
-    output logic regWriteW, mem2regW,
+    output logic regWriteW, mem2regW, memWriteW,
     output logic PCSrcM
 );
     /* memory read/write */
@@ -21,16 +21,16 @@ module memory
     logic[(`WORD - 1):0] readDataM = RAM[address];
 
     /* memory register */
-    localparam MEM_REG_SIZE = 2 * `WORD + `REG_SIZE + 2; // size of output module params 
+    localparam MEM_REG_SIZE = 2 * `WORD + `REG_SIZE + 3; // size of output module params 
     logic[(MEM_REG_SIZE - 1):0] memregd, memregq;
     assign memregd = {
-        readDataM, ALUResultM, writeRegM, regWriteM, mem2regM
+        readDataM, ALUResultM, writeRegM, regWriteM, mem2regM, memWriteM
     };
     flopr #(.WIDTH(MEM_REG_SIZE)) fetchreg(.clk(clk), .reset(reset), .d(memregd), .q(memregq));
 
     /* output */
     assign PCSrcM = zeroM & branchM;
     assign {
-        readDataW, ALUResultW, writeRegW, regWriteW, mem2regW
+        readDataW, ALUResultW, writeRegW, regWriteW, mem2regW, memWriteW
     } = memregq;
 endmodule

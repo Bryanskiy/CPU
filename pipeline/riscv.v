@@ -17,7 +17,7 @@ module riscv(
         .instrD(instrD)
     );
 /*=======================================================================
-                                DECODE
+                                DECODE + WB
 =========================================================================*/
     logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE;
     logic[(`REG_SIZE - 1):0] writeRegE;
@@ -86,7 +86,7 @@ module riscv(
 =========================================================================*/
     logic[(`WORD - 1):0] readDataW, ALUResultW;
     logic[(`REG_SIZE - 1):0] writeRegW;
-    logic mem2regW;
+    logic mem2regW, memWriteW;
     memory memory(
         .clk(clk),
         .reset(reset),
@@ -104,12 +104,25 @@ module riscv(
         .writeRegW(writeRegW),
         .regWriteW(regWriteW),
         .mem2regW(mem2regW),
+        .memWriteW(memWriteW),
         .PCSrcM(PCSrcM)
     );
 
-/*=======================================================================
-                                WRITE BACK
-=========================================================================*/
     assign resultW = mem2regW ? readDataW : ALUResultW;
+
+    /* trace */
+    integer num; initial assign num = 0;
+    always @(negedge clk) begin
+        num <= num + 1;
+        $display("-----------------------");
+        $display("NUM=%d", num);
+
+        if (regWriteW & (writeRegW != 0))
+            $display("x%d=0x%0h", writeRegW, resultW);
+        else if (memWriteW)
+            $display("M[0x%0h]=0x%0h", ALUResultW, writeDataM);
+        
+        $display("PC=0x%0h", pcD);
+    end
 
 endmodule
