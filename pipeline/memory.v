@@ -2,7 +2,7 @@ module memory
 #(parameter DMEM_POWER = 18)
 (
     input logic clk, reset,
-    input logic[(`WORD - 1):0] writeDataM, ALUResultM, pcM,
+    input logic[(`WORD - 1):0] writeDataM, ALUResultM,
     input logic[(`REG_SIZE - 1):0] writeRegM,
     input logic regWriteM, memWriteM, mem2regM,
     input logic zeroM, branchM,

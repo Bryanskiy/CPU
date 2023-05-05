@@ -6,10 +6,13 @@ module riscv(
 /*=======================================================================
                                 FETCH
 =========================================================================*/
-    logic[(`WORD-1):0] pcD, instrD;
+    logic[(`WORD-1):0] pcD, pcM, instrD;
+    logic PCSrcM;
     fetch fetch(
         .clk(clk),
         .reset(reset),
+        .pcM(pcM),
+        .PCSrcM(PCSrcM),
         .pcD(pcD),
         .instrD(instrD)
     );
@@ -48,7 +51,7 @@ module riscv(
 /*=======================================================================
                                 EXECUTE
 =========================================================================*/
-    logic[(`WORD - 1):0] writeDataM, ALUResultM, pcM;
+    logic[(`WORD - 1):0] writeDataM, ALUResultM;
     logic[(`REG_SIZE - 1):0] writeRegM;
     logic regWriteM, memWriteM, mem2regM;
     logic zeroM, branchM;
@@ -84,13 +87,11 @@ module riscv(
     logic[(`WORD - 1):0] readDataW, ALUResultW;
     logic[(`REG_SIZE - 1):0] writeRegW;
     logic mem2regW;
-    logic PCSrcM;
     memory memory(
         .clk(clk),
         .reset(reset),
         .writeDataM(writeDataM), 
         .ALUResultM(ALUResultM),
-        .pcM(pcM),
         .writeRegM(writeRegM),
         .regWriteM(regWriteM),
         .memWriteM(regWriteM),
@@ -105,5 +106,10 @@ module riscv(
         .mem2regW(mem2regW),
         .PCSrcM(PCSrcM)
     );
+
+/*=======================================================================
+                                WRITE BACK
+=========================================================================*/
+    assign resultW = mem2regW ? readDataW : ALUResultW;
 
 endmodule
