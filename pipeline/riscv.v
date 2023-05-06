@@ -54,7 +54,7 @@ module riscv(
     );
 
     /* execute stage */
-    logic[(`WORD - 1):0] writeDataM, ALUResultM;
+    logic[(`WORD - 1):0] writeDataM, ALUResultM, pcALUM;
     logic[(`REG_SIZE - 1):0] writeRegM;
     logic regWriteM, memWriteM, mem2regM;
     logic zeroM, branchM;
@@ -80,6 +80,7 @@ module riscv(
         .writeRegM(writeRegM), 
         .ALUResultM(ALUResultM), 
         .pcM(pcM),
+        .pcALUM(pcALUM),
         .regWriteM(regWriteM),
         .memWriteM(memWriteM),
         .mem2regM(mem2regM),
@@ -90,7 +91,7 @@ module riscv(
     );
 
     /* memory stage */
-    logic[(`WORD - 1):0] readDataW, ALUResultW;
+    logic[(`WORD - 1):0] readDataW, ALUResultW, pcW;
     logic[(`REG_SIZE - 1):0] writeRegW;
     logic mem2regW, memWriteW;
     logic finishW, validW;
@@ -101,16 +102,18 @@ module riscv(
         .ALUResultM(ALUResultM),
         .writeRegM(writeRegM),
         .regWriteM(regWriteM),
-        .memWriteM(regWriteM),
-        .mem2regM(regWriteM),
+        .memWriteM(memWriteM),
+        .mem2regM(mem2regM),
         .zeroM(zeroM),
         .branchM(branchM),
         .finishM(finishM),
         .validM(validM),
+        .pcM(pcM),
 
         .readDataW(readDataW),
         .ALUResultW(ALUResultW),
         .writeRegW(writeRegW),
+        .pcW(pcW),
         .regWriteW(regWriteW),
         .mem2regW(mem2regW),
         .memWriteW(memWriteW),
@@ -122,18 +125,21 @@ module riscv(
     assign resultW = mem2regW ? readDataW : ALUResultW;
 
     /* trace */
-    logic[31:0] num;
+    logic[31:0] num = 1;
     always @(negedge clk) begin
-        num <= num + 1;
-        $display("-----------------------");
-        $display("NUM=%0d", num);
+        if (validW) begin
+            num <= num + 1;
+            $display("-----------------------");
+            $display("NUM=%0d", num);
 
-        if (regWriteW & (writeRegW != 0))
-            $display("x%0d=0x%0h", writeRegW, resultW);
-        else if (memWriteW)
-            $display("M[0x%0h]=0x%0h", ALUResultW, writeDataM);
+            if (regWriteW & (writeRegW != 0))
+                $display("x%0d=0x%0h", writeRegW, resultW);
+            else if (memWriteW)
+                $display("M[0x%0h]=0x%0h", ALUResultW, writeDataM);
         
-        $display("PC=0x%0h", pcD);
+            /* TODO: better npc */
+            $display("PC=0x%0h", pcW);
+        end
         if (finishW)
             $finish;
     end

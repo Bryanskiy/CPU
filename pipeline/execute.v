@@ -8,7 +8,7 @@ module execute(
     input logic branchE,
     input logic finishE, validE,
 
-    output logic[(`WORD - 1):0] writeDataM, ALUResultM, pcM,
+    output logic[(`WORD - 1):0] writeDataM, ALUResultM, pcM, pcALUM,
     output logic[(`REG_SIZE - 1):0] writeRegM,
     output logic regWriteM, memWriteM, mem2regM,
     output logic zeroM, branchM, finishM, validM
