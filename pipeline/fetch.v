@@ -5,11 +5,11 @@ module fetch
     input logic PCSrcM,
     input logic[(`WORD-1):0] pcM,
 
-    output logic[(`WORD-1):0] pcD, instrD
+    output logic[(`WORD-1):0] pcD, instrD,
+    output logic validD
 );
     /* next pc logic */
     logic[(`WORD-1):0] pc /*verilator public*/, npc;
-    initial assign npc = pc;
 
     flopr pcreg(.clk(clk), .reset(reset), .d(npc), .q(pc));
     assign npc = PCSrcM ? pcM : pc + 4;
@@ -19,11 +19,11 @@ module fetch
     logic[(`WORD-1):0] instr = RAM[pc >> 2];
 
     /* fetch register */
-    logic[(2 * `WORD-1):0] fetchregd, fetchregq;
-    assign fetchregd = {pc, instr};
+    logic[(2 * `WORD):0] fetchregd, fetchregq;
+    assign fetchregd = {pc, instr, npc != 0};
     initial assign fetchregq = fetchregd;
-    flopr #(.WIDTH(2 * `WORD)) fetchreg(.clk(clk), .reset(reset), .d(fetchregd), .q(fetchregq));
+    flopr #(.WIDTH(2 * `WORD + 1)) fetchreg(.clk(clk), .reset(reset), .d(fetchregd), .q(fetchregq));
 
     /* return values for DECODE stage */
-    assign {pcD, instrD} = fetchregq;
+    assign {pcD, instrD, validD} = fetchregq;
 endmodule
