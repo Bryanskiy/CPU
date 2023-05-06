@@ -1,7 +1,7 @@
 module fetch
 #(parameter IMEM_POWER = 18)
 (
-    input logic clk, reset,
+    input logic clk, reset, en,
     input logic PCSrcM,
     input logic[(`WORD-1):0] pcM,
 
@@ -22,7 +22,13 @@ module fetch
     logic[(2 * `WORD):0] fetchregd, fetchregq;
     assign fetchregd = {pc, instr, npc != 0};
     initial assign fetchregq = fetchregd;
-    flopr #(.WIDTH(2 * `WORD + 1)) fetchreg(.clk(clk), .reset(reset), .d(fetchregd), .q(fetchregq));
+    flopr #(.WIDTH(2 * `WORD + 1)) fetchreg(
+        .clk(clk),
+        .reset(reset),
+        .en(en),
+        .d(fetchregd),
+        .q(fetchregq)
+    );
 
     /* return values for DECODE stage */
     assign {pcD, instrD, validD} = fetchregq;

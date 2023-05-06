@@ -20,7 +20,7 @@ module riscv(
 
     /* decode +  wb */
     logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE;
-    logic[(`REG_SIZE - 1):0] writeRegE, raddr1E, raddr2E;
+    logic[(`REG_SIZE - 1):0] writeRegE, raddr1E, raddr2E, raddr1D, raddr2D;
     logic[3:0] ALUControlE;
     logic[1:0] ALUSrcE;
     logic regWriteE, memWriteE, mem2regE;
@@ -42,6 +42,8 @@ module riscv(
         .rdata2E(rdata2E),
         .raddr1E(raddr1E),
         .raddr2E(raddr2E),
+        .raddr1D(raddr1D),
+        .raddr2D(raddr2D),
         .writeRegE(writeRegE),
         .immE(immE),
         .pcE(pcE),
@@ -134,6 +136,7 @@ module riscv(
     assign resultW = mem2regW ? readDataW : ALUResultW;
 
     /* hazard */
+    logic stallF, stallD, flushE;
     hazard hazard(
         .raddr1E(raddr1E),
         .raddr2E(raddr2E),
@@ -141,7 +144,14 @@ module riscv(
         .writeRegW(writeRegW),
         .regWriteM(regWriteM),
         .regWriteW(regWriteW),
+        .mem2regE(mem2regE),
+        .raddr1D(raddr1D),
+        .raddr2D(raddr2D),
+        .writeRegE(writeRegE),
 
+        .stallF(stallF),
+        .stallD(stallD),
+        .flushE(flushE),
         .forward1(forward1),
         .forward2(forward2)
     );

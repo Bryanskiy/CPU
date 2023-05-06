@@ -8,7 +8,7 @@ module decode(
     input logic[(`WORD-1):0] resultW,
 
     output logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE,
-    output logic[(`REG_SIZE - 1):0] writeRegE, raddr1E, raddr2E,
+    output logic[(`REG_SIZE - 1):0] writeRegE, raddr1E, raddr2E, raddr1D, raddr2D,
     output logic[3:0] ALUControlE,
     output logic[1:0] ALUSrcE,
     output logic regWriteE, memWriteE, mem2regE,
@@ -45,8 +45,10 @@ module decode(
     /* regfile logic: write back + read data for exec stage */
     logic[(`REG_SIZE - 1):0] rs1, rs2, rd, writeRegD;
     assign rs1 = instrD[19:15];
+    assign raddr1D = rs1;
     assign rs2 = instrD[24:20];
-    assign rd  = instrD[11:7];
+    assign raddr2D = rs2;
+    assign rd = instrD[11:7];
     assign writeRegD = rd;
 
     logic[(`WORD - 1):0] rdata1D, rdata2D;
