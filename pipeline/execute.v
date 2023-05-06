@@ -21,12 +21,13 @@ module execute(
 );
 
     logic[(`WORD - 1):0] src1, src2;
-
+    logic[(`WORD - 1):0] writeDataE;
     /* calculate alu input */
     alucontroller alucontroller(
         .ALUSrc(ALUSrcE),
         .rs1(rdata1E),
         .rs2(rdata2E),
+        .writeDataE(writeDataE),
         .forward1(forward1),
         .forward2(forward2),
         .resultW(resultW),
@@ -39,7 +40,6 @@ module execute(
         .src2(src2)        
     );
 
-    logic[(`WORD - 1):0] writeDataE = rdata2E;
     /* alu */
     logic[(`WORD - 1):0] ALUResultE;
     logic zeroE;
@@ -96,7 +96,7 @@ module alucontroller(
     input logic[1:0] forward1, forward2,
     input logic validM, validW,
 
-    output logic[(`WORD - 1):0] src1, src2
+    output logic[(`WORD - 1):0] src1, src2, writeDataE
 );
     logic[(`WORD - 1):0] forwardsrc1, forwardsrc2;
     forwardSrcController forwardSrcController1(
@@ -108,9 +108,10 @@ module alucontroller(
     forwardSrcController forwardSrcController2(
         .ALUResultM(ALUResultM), .resultW(resultW), .src(rs2),
         .validM(validM), .validW(validW),
-        .forward(forward1), .forwardsrc(forwardsrc2)
+        .forward(forward2), .forwardsrc(forwardsrc2)
     );
 
+    assign writeDataE = forwardsrc2;
     always_comb
         case(ALUSrc)
             `ALU_SRC_IMM: begin

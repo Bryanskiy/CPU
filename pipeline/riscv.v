@@ -99,7 +99,7 @@ module riscv(
     );
 
     /* memory stage */
-    logic[(`WORD - 1):0] readDataW, ALUResultW, pcW;
+    logic[(`WORD - 1):0] readDataW, ALUResultW, pcW, writeDataW;
     logic[(`REG_SIZE - 1):0] writeRegW;
     logic mem2regW, memWriteW;
     logic finishW, validW;
@@ -121,6 +121,7 @@ module riscv(
         .readDataW(readDataW),
         .ALUResultW(ALUResultW),
         .writeRegW(writeRegW),
+        .writeDataW(writeDataW),
         .pcW(pcW),
         .regWriteW(regWriteW),
         .mem2regW(mem2regW),
@@ -156,10 +157,10 @@ module riscv(
             if (regWriteW & (writeRegW != 0))
                 $display("x%0d=0x%0h", writeRegW, resultW);
             else if (memWriteW)
-                $display("M[0x%0h]=0x%0h", ALUResultW, writeDataM);
+                $display("M[0x%0h]=0x%0h", ALUResultW, writeDataW);
         
             /* TODO: better npc */
-            $display("PC=0x%0h", pcW);
+            $display("PC=0x%0h", pcW + 4);
         end
         if (finishW)
             $finish;
