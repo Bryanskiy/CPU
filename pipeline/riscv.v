@@ -3,9 +3,8 @@
 module riscv(
     input logic clk, reset
 );
-/*=======================================================================
-                                FETCH
-=========================================================================*/
+
+    /* fetch stage */
     logic[(`WORD-1):0] pcD, pcM, instrD;
     logic PCSrcM;
     fetch fetch(
@@ -16,15 +15,15 @@ module riscv(
         .pcD(pcD),
         .instrD(instrD)
     );
-/*=======================================================================
-                                DECODE + WB
-=========================================================================*/
+
+    /* decode +  wb */
     logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE;
     logic[(`REG_SIZE - 1):0] writeRegE;
     logic[3:0] ALUControlE;
     logic[1:0] ALUSrcE;
     logic regWriteE, memWriteE, mem2regE;
     logic branchE;
+    logic finishE;
 
     logic regWriteW;
     logic[(`WORD-1):0] resultW;
@@ -45,16 +44,16 @@ module riscv(
         .regWriteE(regWriteE),
         .memWriteE(memWriteE),
         .mem2regE(mem2regE),
-        .branchE(branchE)
+        .branchE(branchE),
+        .finishE(finishE)
     );
 
-/*=======================================================================
-                                EXECUTE
-=========================================================================*/
+    /* execute stage */
     logic[(`WORD - 1):0] writeDataM, ALUResultM;
     logic[(`REG_SIZE - 1):0] writeRegM;
     logic regWriteM, memWriteM, mem2regM;
     logic zeroM, branchM;
+    logic finishM;
     execute execute(
         .clk(clk),
         .reset(reset),
@@ -69,6 +68,7 @@ module riscv(
         .memWriteE(memWriteE), 
         .mem2regE(mem2regE),
         .branchE(branchE),
+        .finishE(finishE),
 
         .writeDataM(writeDataM), 
         .writeRegM(writeRegM), 
@@ -78,15 +78,15 @@ module riscv(
         .memWriteM(memWriteM),
         .mem2regM(mem2regM),
         .branchM(branchM),
-        .zeroM(zeroM)
+        .zeroM(zeroM),
+        .finishM(finishM)
     );
 
-/*=======================================================================
-                                MEMORY
-=========================================================================*/
+    /* memory stage */
     logic[(`WORD - 1):0] readDataW, ALUResultW;
     logic[(`REG_SIZE - 1):0] writeRegW;
     logic mem2regW, memWriteW;
+    logic finishW;
     memory memory(
         .clk(clk),
         .reset(reset),
@@ -98,6 +98,7 @@ module riscv(
         .mem2regM(regWriteM),
         .zeroM(zeroM),
         .branchM(branchM),
+        .finishM(finishM),
 
         .readDataW(readDataW),
         .ALUResultW(ALUResultW),
@@ -105,24 +106,27 @@ module riscv(
         .regWriteW(regWriteW),
         .mem2regW(mem2regW),
         .memWriteW(memWriteW),
-        .PCSrcM(PCSrcM)
+        .PCSrcM(PCSrcM),
+        .finishW(finishW)
     );
 
     assign resultW = mem2regW ? readDataW : ALUResultW;
 
     /* trace */
-    integer num; initial assign num = 0;
+    logic[31:0] num;
     always @(negedge clk) begin
         num <= num + 1;
         $display("-----------------------");
-        $display("NUM=%d", num);
+        $display("NUM=%0d", num);
 
         if (regWriteW & (writeRegW != 0))
-            $display("x%d=0x%0h", writeRegW, resultW);
+            $display("x%d=0x%h", writeRegW, resultW);
         else if (memWriteW)
-            $display("M[0x%0h]=0x%0h", ALUResultW, writeDataM);
+            $display("M[0x%h]=0x%h", ALUResultW, writeDataM);
         
-        $display("PC=0x%0h", pcD);
+        $display("PC=0x%h", pcD);
+        if (finishW)
+            $finish;
     end
 
 endmodule

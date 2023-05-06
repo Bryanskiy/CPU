@@ -6,11 +6,12 @@ module execute(
     input logic[1:0] ALUSrcE,
     input logic regWriteE, memWriteE, mem2regE,
     input logic branchE,
+    input logic finishE,
 
     output logic[(`WORD - 1):0] writeDataM, ALUResultM, pcM,
     output logic[(`REG_SIZE - 1):0] writeRegM,
     output logic regWriteM, memWriteM, mem2regM,
-    output logic zeroM, branchM
+    output logic zeroM, branchM, finishM
 );
 
     logic[(`WORD - 1):0] src1, src2;
@@ -38,18 +39,18 @@ module execute(
         .zero(zeroE));
 
     /* execute register logic */
-    localparam EXEC_REG_SIZE = 3 * `WORD + `REG_SIZE + 2; // size of output module params 
+    localparam EXEC_REG_SIZE = 3 * `WORD + `REG_SIZE + 3; // size of output module params 
     logic[(EXEC_REG_SIZE-1):0] execregd, execregq;
 
     assign execregd = {
-        writeDataE, ALUResultE, pcE, writeRegE, zeroE, branchE
+        writeDataE, ALUResultE, pcE, writeRegE, zeroE, branchE, finishE
     };
 
     flopr #(.WIDTH(EXEC_REG_SIZE)) execreg(.clk(clk), .reset(reset), .d(execregd), .q(execregq));
 
     /* ouput parameters for memory stage */
     assign {
-        writeDataM, ALUResultM, pcM, writeRegM, zeroM, branchM
+        writeDataM, ALUResultM, pcM, writeRegM, zeroM, branchM, finishM
     } = execregq;
 
 endmodule

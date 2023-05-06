@@ -11,11 +11,12 @@ module decode(
     output logic[3:0] ALUControlE,
     output logic[1:0] ALUSrcE,
     output logic regWriteE, memWriteE, mem2regE,
-    output logic branchE
+    output logic branchE, finishE
 );
     /* instruction decode */
     logic regWriteD, memWriteD, mem2regD;
     logic branchD;
+    logic finishD;
 
     logic[6:0] opcode = instrD[6:0];
     logic[2:0] func3 = instrD[14:12];
@@ -24,7 +25,8 @@ module decode(
         .regWrite(regWriteD),
         .memWrite(memWriteD),
         .mem2reg(mem2regD),
-        .branch(branchD)
+        .branch(branchD),
+        .finish(finishD)
     );
 
     logic[3:0] ALUControlD;
@@ -60,9 +62,10 @@ module decode(
     );
 
     /* decode register */
-    localparam DECODE_REG_SIZE = 4 * `WORD + 9 + `REG_SIZE; // size of output module params 
+    localparam DECODE_REG_SIZE = 4 * `WORD + 10 + `REG_SIZE; // size of output module params 
     logic[(DECODE_REG_SIZE-1):0] decregd, decregq;
     assign decregd = {
+        finishD,
         regWriteD,
         memWriteD,
         mem2regD,
@@ -78,6 +81,7 @@ module decode(
     
     /* output for exec stage */
     assign {
+        finishE,
         regWriteE,
         memWriteE,
         mem2regE,
@@ -96,7 +100,8 @@ module maindec(
     input logic[6:0] opcode,
 
     output logic regWrite, memWrite, mem2reg,
-    output logic branch
+    output logic branch,
+    output logic finish
 );
     always_comb
         case(opcode)
@@ -105,54 +110,63 @@ module maindec(
                 memWrite = 0;
                 mem2reg = 1;
                 branch = 0;
+                finish = 0;
             end
             `OPCODE_STORE: begin
                 regWrite = 0;
                 memWrite = 1;
                 mem2reg = 0;
                 branch = 0;
+                finish = 0;
              end
             `OPCODE_SYSTEM: begin
                 regWrite = 0;
                 memWrite = 0;
                 mem2reg = 0;
                 branch = 0;
+                finish = 1;
              end
             `OPCODE_OP_IMM: begin 
                 regWrite = 1;
                 memWrite = 0;
                 mem2reg = 0;
-                branch = 0;                
+                branch = 0;
+                finish = 0;                
             end
             `OPCODE_OP: begin
                 regWrite = 1;
                 memWrite = 0;
                 mem2reg = 0;
                 branch = 0;
+                finish = 0;
             end
             `OPCODE_LUI: begin
                 regWrite = 1;
                 memWrite = 0;
                 mem2reg = 0;
                 branch = 0;
+                finish = 0;
             end
             `OPCODE_BRANCH: begin
                 regWrite = 0;
                 memWrite = 0;
                 mem2reg = 0;
-                branch = 1; 
+                branch = 1;
+                finish = 0; 
             end
             `OPCODE_JAL: begin
                 regWrite = 1;
                 memWrite = 0;
                 mem2reg = 0;
                 branch = 0;
+                finish = 0;
             end
             `OPCODE_JALR: begin
                 regWrite = 1;
                 memWrite = 0;
                 mem2reg = 0;
-                branch = 0;                
+                branch = 0;
+                finish = 0;                
             end
 
             default: begin
@@ -160,6 +174,7 @@ module maindec(
                 memWrite = 0;
                 mem2reg = 0;
                 branch = 0;
+                finish = 1;
             end
         endcase
 endmodule
