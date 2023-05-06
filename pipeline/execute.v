@@ -8,6 +8,12 @@ module execute(
     input logic branchE,
     input logic finishE, validE,
 
+    /* bypass */
+    input logic[1:0] forward1, forward2,
+    input logic[(`WORD - 1):0] resultW,
+    input logic validW,
+
+    /* output */
     output logic[(`WORD - 1):0] writeDataM, ALUResultM, pcM, pcALUM,
     output logic[(`REG_SIZE - 1):0] writeRegM,
     output logic regWriteM, memWriteM, mem2regM,
@@ -21,6 +27,12 @@ module execute(
         .ALUSrc(ALUSrcE),
         .rs1(rdata1E),
         .rs2(rdata2E),
+        .forward1(forward1),
+        .forward2(forward2),
+        .resultW(resultW),
+        .validM(validM),
+        .validW(validW),
+        .ALUResultM(ALUResultM),
         .pc(pcE),
         .imm32(immE),
         .src1(src1), 
@@ -79,22 +91,36 @@ module alu(
 endmodule
 
 module alucontroller(
-    input logic[(`WORD - 1):0] imm32, rs1, rs2, pc,
+    input logic[(`WORD - 1):0] imm32, rs1, rs2, pc, ALUResultM, resultW,
     input logic[1:0] ALUSrc,
+    input logic[1:0] forward1, forward2,
+    input logic validM, validW,
 
     output logic[(`WORD - 1):0] src1, src2
 );
+    logic[(`WORD - 1):0] forwardsrc1, forwardsrc2;
+    forwardSrcController forwardSrcController1(
+        .ALUResultM(ALUResultM), .resultW(resultW), .src(rs1),
+        .validM(validM), .validW(validW),
+        .forward(forward1), .forwardsrc(forwardsrc1)
+    );
+
+    forwardSrcController forwardSrcController2(
+        .ALUResultM(ALUResultM), .resultW(resultW), .src(rs2),
+        .validM(validM), .validW(validW),
+        .forward(forward1), .forwardsrc(forwardsrc2)
+    );
 
     always_comb
         case(ALUSrc)
             `ALU_SRC_IMM: begin
-                src1 = rs1;
+                src1 = forwardsrc1;
                 src2 = imm32;
             end
 
             `ALU_SRC_RD2: begin
-                src1 = rs1;
-                src2 = rs2;
+                src1 = forwardsrc1;
+                src2 = forwardsrc2;
             end
 
             `ALU_SRC_PC_PLUS_4: begin
@@ -107,3 +133,17 @@ module alucontroller(
             end
     endcase
 endmodule
+
+module forwardSrcController(
+    input logic[(`WORD - 1):0] ALUResultM, resultW, src,
+    input logic[1:0] forward,
+    input logic validM, validW,
+
+    output logic[(`WORD - 1):0] forwardsrc
+);
+
+    assign forwardsrc = ((forward == `FORWARD_M) & validM)? ALUResultM :
+                        ((forward == `FORWARD_W) & validW) ? resultW :
+                        src;
+
+endmodule;

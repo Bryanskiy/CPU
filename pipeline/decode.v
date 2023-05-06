@@ -8,7 +8,7 @@ module decode(
     input logic[(`WORD-1):0] resultW,
 
     output logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE,
-    output logic[(`REG_SIZE - 1):0] writeRegE,
+    output logic[(`REG_SIZE - 1):0] writeRegE, raddr1E, raddr2E,
     output logic[3:0] ALUControlE,
     output logic[1:0] ALUSrcE,
     output logic regWriteE, memWriteE, mem2regE,
@@ -63,18 +63,18 @@ module decode(
     );
 
     /* decode register */
-    localparam DECODE_REG_SIZE = 4 * `WORD + 11 + `REG_SIZE; // size of output module params 
+    localparam DECODE_REG_SIZE = 4 * `WORD + 11 + 3 * `REG_SIZE; // size of output module params 
     logic[(DECODE_REG_SIZE-1):0] decregd, decregq;
     assign decregd = {
         validD, finishD, regWriteD, memWriteD, mem2regD, ALUControlD,
-        ALUSrcD, writeRegD, rdata1D, rdata2D, immD, pcD
+        ALUSrcD, writeRegD, rdata1D, rdata2D, immD, pcD, rs1, rs2
     };
     flopr #(.WIDTH(DECODE_REG_SIZE)) decodereg(.clk(clk), .reset(reset), .d(decregd), .q(decregq));
     
     /* output for exec stage */
     assign {
         validE, finishE, regWriteE, memWriteE, mem2regE, ALUControlE,
-        ALUSrcE, writeRegE, rdata1E, rdata2E, immE, pcE
+        ALUSrcE, writeRegE, rdata1E, rdata2E, immE, pcE, raddr1E, raddr2E
     } = decregq;
       
 endmodule
