@@ -26,7 +26,7 @@ module memory
     localparam MEM_REG_SIZE = 4 * `WORD + `REG_SIZE + 5; // size of output module params 
     logic[(MEM_REG_SIZE - 1):0] memregd, memregq;
     assign memregd = {
-        readDataM, ALUResultM, writeRegM, regWriteM, mem2regM, memWriteM, finishM, validM,
+        readDataM, ALUResultM, writeRegM, regWriteM, mem2regM, memWriteM, finishM, pcM != 0,
         pcM, writeDataM
     };
     flopr #(.WIDTH(MEM_REG_SIZE)) fetchreg(.clk(clk), .reset(reset), .en(en), .d(memregd), .q(memregq));

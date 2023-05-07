@@ -68,7 +68,7 @@ module decode(
     localparam DECODE_REG_SIZE = 4 * `WORD + 11 + 3 * `REG_SIZE; // size of output module params 
     logic[(DECODE_REG_SIZE-1):0] decregd, decregq;
     assign decregd = {
-        validD, finishD, regWriteD, memWriteD, mem2regD, ALUControlD,
+        pcD != 0, finishD, regWriteD, memWriteD, mem2regD, ALUControlD,
         ALUSrcD, writeRegD, rdata1D, rdata2D, immD, pcD, rs1, rs2
     };
     flopr #(.WIDTH(DECODE_REG_SIZE)) decodereg(.clk(clk), .reset(reset), .en(en), .d(decregd), .q(decregq));
@@ -159,7 +159,7 @@ module maindec(
                 memWrite = 0;
                 mem2reg = 0;
                 branch = 0;
-                finish = 1;
+                finish = 0;
             end
         endcase
 endmodule

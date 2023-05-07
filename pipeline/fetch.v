@@ -20,8 +20,7 @@ module fetch
 
     /* fetch register */
     logic[(2 * `WORD):0] fetchregd, fetchregq;
-    assign fetchregd = {pc, instr, npc != 0};
-    initial assign fetchregq = fetchregd;
+    assign fetchregd = {pc, instr, pc != 0};
     flopr #(.WIDTH(2 * `WORD + 1)) fetchreg(
         .clk(clk),
         .reset(reset),

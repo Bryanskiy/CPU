@@ -56,7 +56,7 @@ module execute(
 
     assign execregd = {
         writeDataE, ALUResultE, pcE, writeRegE, zeroE, branchE, finishE,
-        regWriteE, memWriteE, mem2regE, validE
+        regWriteE, memWriteE, mem2regE, pcE != 0
     };
 
     flopr #(.WIDTH(EXEC_REG_SIZE)) execreg(.clk(clk), .reset(reset), .en(en), .d(execregd), .q(execregq));
