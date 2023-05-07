@@ -5,13 +5,11 @@ module memory
     input logic[(`WORD - 1):0] writeDataM, ALUResultM, pcM,
     input logic[(`REG_SIZE - 1):0] writeRegM,
     input logic regWriteM, memWriteM, mem2regM,
-    input logic zeroM, branchM,
     input logic finishM, validM,
 
     output logic[(`WORD - 1):0] readDataW, ALUResultW, pcW, writeDataW,
     output logic[(`REG_SIZE - 1):0] writeRegW,
     output logic regWriteW, mem2regW, memWriteW,
-    output logic PCSrcM,
     output logic finishW, validW
 );
     /* memory read/write */
@@ -32,7 +30,6 @@ module memory
     flopr #(.WIDTH(MEM_REG_SIZE)) fetchreg(.clk(clk), .reset(reset), .en(en), .d(memregd), .q(memregq));
 
     /* output */
-    assign PCSrcM = zeroM & branchM;
     assign {
         readDataW, ALUResultW, writeRegW, regWriteW, mem2regW, memWriteW, finishW, validW,
         pcW, writeDataW

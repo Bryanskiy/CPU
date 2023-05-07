@@ -2,8 +2,8 @@ module fetch
 #(parameter IMEM_POWER = 18)
 (
     input logic clk, reset, en, stallF,
-    input logic PCSrcM,
-    input logic[(`WORD-1):0] pcM,
+    input logic PCSrcD,
+    input logic[(`WORD-1):0] pcnD,
 
     output logic[(`WORD-1):0] pcD, instrD,
     output logic validD
@@ -11,8 +11,8 @@ module fetch
     /* next pc logic */
     logic[(`WORD-1):0] pc /*verilator public*/, npc;
 
-    flopr pcreg(.clk(clk), .reset(reset), .en(!stallF), .d(npc), .q(pc));
-    assign npc = PCSrcM ? pcM : pc + 4;
+    flopr pcreg(.clk(clk), .reset(0), .en(!stallF), .d(npc), .q(pc));
+    assign npc = PCSrcD ? pcnD : pc + 4;
 
     /* instruction memory */
     reg[(`WORD - 1):0] RAM[0:((1 << IMEM_POWER) - 1)] /*verilator public*/;

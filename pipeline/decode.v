@@ -5,18 +5,23 @@ module decode(
     input logic validD,
     /* write back stage logic */
     input logic regWriteW,
-    input logic[(`WORD-1):0] resultW,
+    input logic[(`WORD - 1):0] resultW,
 
-    output logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE,
-    output logic[(`REG_SIZE - 1):0] writeRegE, raddr1E, raddr2E, raddr1D, raddr2D,
+    /* bypass */
+    input logic[1:0] forward1, forward2,
+    input logic validM, validW,
+    input logic[(`WORD - 1):0] ALUResultM,
+
+    output logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE, pcnD,
+    output logic[(`REG_SIZE - 1):0] writeRegE, raddr1E, raddr2E, raddr1D, raddr2D, writeRegM,
     output logic[3:0] ALUControlE,
     output logic[1:0] ALUSrcE,
-    output logic regWriteE, memWriteE, mem2regE,
-    output logic branchE, finishE, validE
+    output logic regWriteE, memWriteE, mem2regE, controllchangeD,
+    output logic finishE, validE
 );
     /* instruction decode */
     logic regWriteD, memWriteD, mem2regD;
-    logic branchD;
+    logic branchD, jumpD;
     logic finishD;
 
     logic[6:0] opcode = instrD[6:0];
@@ -27,16 +32,18 @@ module decode(
         .memWrite(memWriteD),
         .mem2reg(mem2regD),
         .branch(branchD),
+        .jump(jumpD),
         .finish(finishD)
     );
 
     logic[3:0] ALUControlD;
-    logic[1:0] ALUSrcD;
+    logic[1:0] ALUSrcD, ALUnpcD;
     aludec aludec(
         .opcode(opcode),
         .func3(func3),
         .ALUControl(ALUControlD),
-        .ALUSrc(ALUSrcD)
+        .ALUSrc(ALUSrcD),
+        .ALUnpc(ALUnpcD)
     );
 
     logic[(`WORD-1):0] immD;
@@ -64,6 +71,18 @@ module decode(
         .rdata2(rdata2D)
     );
 
+    /* pc for branches/jumps */
+    logic[(`WORD - 1):0] forwardsrc1, forwardsrc2;
+    assign forwardsrc1 = ((forward1 == `FORWARD_M) & validM)? rdata1D : ALUResultM;
+    assign forwardsrc2 = ((forward2 == `FORWARD_M) & validM)? rdata2D : ALUResultM;
+
+    logic zeroD;
+    assign zeroD = forwardsrc1 < forwardsrc2;
+    assign controllchangeD = (zeroD & branchD) || jumpD;
+    assign pcnD = (ALUnpcD == `ALU_NPC_JALR) ? forwardsrc1 + immD:
+                    (ALUnpcD == `ALU_NPC_4) ? pcD + 4:
+                    pcD + immD;
+
     /* decode register */
     localparam DECODE_REG_SIZE = 4 * `WORD + 11 + 3 * `REG_SIZE; // size of output module params 
     logic[(DECODE_REG_SIZE-1):0] decregd, decregq;
@@ -85,7 +104,7 @@ module maindec(
     input logic[6:0] opcode,
 
     output logic regWrite, memWrite, mem2reg,
-    output logic branch,
+    output logic branch, jump,
     output logic finish
 );
     always_comb
@@ -96,6 +115,7 @@ module maindec(
                 mem2reg = 1;
                 branch = 0;
                 finish = 0;
+                jump = 0;
             end
             `OPCODE_STORE: begin
                 regWrite = 0;
@@ -103,6 +123,7 @@ module maindec(
                 mem2reg = 0;
                 branch = 0;
                 finish = 0;
+                jump = 0;
              end
             `OPCODE_SYSTEM: begin
                 regWrite = 0;
@@ -110,12 +131,14 @@ module maindec(
                 mem2reg = 0;
                 branch = 0;
                 finish = 1;
+                jump = 0;
              end
             `OPCODE_OP_IMM: begin 
                 regWrite = 1;
                 memWrite = 0;
                 mem2reg = 0;
                 branch = 0;
+                jump = 0;
                 finish = 0;                
             end
             `OPCODE_OP: begin
@@ -124,6 +147,7 @@ module maindec(
                 mem2reg = 0;
                 branch = 0;
                 finish = 0;
+                jump = 0;
             end
             `OPCODE_LUI: begin
                 regWrite = 1;
@@ -131,12 +155,14 @@ module maindec(
                 mem2reg = 0;
                 branch = 0;
                 finish = 0;
+                jump = 0;
             end
             `OPCODE_BRANCH: begin
                 regWrite = 0;
                 memWrite = 0;
                 mem2reg = 0;
                 branch = 1;
+                jump = 0;
                 finish = 0; 
             end
             `OPCODE_JAL: begin
@@ -144,6 +170,7 @@ module maindec(
                 memWrite = 0;
                 mem2reg = 0;
                 branch = 0;
+                jump = 1;
                 finish = 0;
             end
             `OPCODE_JALR: begin
@@ -151,6 +178,7 @@ module maindec(
                 memWrite = 0;
                 mem2reg = 0;
                 branch = 0;
+                jump = 1;
                 finish = 0;                
             end
 
@@ -159,6 +187,7 @@ module maindec(
                 memWrite = 0;
                 mem2reg = 0;
                 branch = 0;
+                jump = 0;
                 finish = 0;
             end
         endcase
@@ -169,22 +198,25 @@ module aludec(
     input logic[2:0] func3,
 
     output logic[3:0] ALUControl,
-    output logic[1:0] ALUSrc
+    output logic[1:0] ALUSrc, ALUnpc
 );
     always_comb
         case(opcode)
             `OPCODE_LOAD, `OPCODE_LUI, `OPCODE_STORE: begin
                 ALUControl = `ALU_ADD;
                 ALUSrc = `ALU_SRC_IMM;
+                ALUnpc = `ALU_NPC_4;
             end
 
             `OPCODE_JAL, `OPCODE_JALR: begin
+                ALUnpc = (opcode == `OPCODE_JAL) ? `ALU_NPC_JAL : `ALU_NPC_JALR;
                 ALUControl = `ALU_ADD;
                 ALUSrc = `ALU_SRC_PC_PLUS_4;
             end
 
             `OPCODE_BRANCH: begin
                 ALUSrc = `ALU_SRC_RD2;
+                ALUnpc = `ALU_NPC_BRANCH;
                 case (func3)
                     3'b000, 3'b001:
                         ALUControl = `ALU_SUB; // beq, bne
@@ -198,6 +230,7 @@ module aludec(
             end
 
             `OPCODE_OP, `OPCODE_OP_IMM: begin
+                ALUnpc = `ALU_NPC_4;
                 ALUSrc = (opcode == `OPCODE_OP) ? `ALU_SRC_RD2 : `ALU_SRC_IMM; 
                 case (func3)
                     3'b000: ALUControl = `ALU_ADD;

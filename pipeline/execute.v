@@ -5,7 +5,6 @@ module execute(
     input logic[3:0] ALUControlE,
     input logic[1:0] ALUSrcE,
     input logic regWriteE, memWriteE, mem2regE,
-    input logic branchE,
     input logic finishE, validE,
 
     /* bypass */
@@ -14,10 +13,10 @@ module execute(
     input logic validW,
 
     /* output */
-    output logic[(`WORD - 1):0] writeDataM, ALUResultM, pcM, pcALUM,
+    output logic[(`WORD - 1):0] writeDataM, ALUResultM, pcM,
     output logic[(`REG_SIZE - 1):0] writeRegM,
     output logic regWriteM, memWriteM, mem2regM,
-    output logic zeroM, branchM, finishM, validM
+    output logic finishM, validM
 );
 
     logic[(`WORD - 1):0] src1, src2;
@@ -42,20 +41,19 @@ module execute(
 
     /* alu */
     logic[(`WORD - 1):0] ALUResultE;
-    logic zeroE;
     alu alu(
         .src1(src1), 
         .src2(src2), 
         .ALUControl(ALUControlE), 
-        .ALUResult(ALUResultE), 
-        .zero(zeroE));
+        .ALUResult(ALUResultE)
+    );
 
     /* execute register logic */
-    localparam EXEC_REG_SIZE = 3 * `WORD + `REG_SIZE + 7; // size of output module params 
+    localparam EXEC_REG_SIZE = 3 * `WORD + `REG_SIZE + 5; // size of output module params 
     logic[(EXEC_REG_SIZE-1):0] execregd, execregq;
 
     assign execregd = {
-        writeDataE, ALUResultE, pcE, writeRegE, zeroE, branchE, finishE,
+        writeDataE, ALUResultE, pcE, writeRegE, finishE,
         regWriteE, memWriteE, mem2regE, pcE != 0
     };
 
@@ -63,7 +61,7 @@ module execute(
 
     /* ouput parameters for memory stage */
     assign {
-        writeDataM, ALUResultM, pcM, writeRegM, zeroM, branchM, finishM,
+        writeDataM, ALUResultM, pcM, writeRegM, finishM,
         regWriteM, memWriteM, mem2regM, validM
     } = execregq;
 
@@ -73,8 +71,7 @@ module alu(
     input logic[(`WORD - 1):0] src1, src2,
     input logic[3:0] ALUControl,
 
-    output logic[(`WORD - 1):0] ALUResult,
-    output logic zero
+    output logic[(`WORD - 1):0] ALUResult
 );
     always_comb begin
         case(ALUControl)
@@ -85,7 +82,6 @@ module alu(
             default: 
                 $display("invalid ALUControl: %b\n", ALUControl);
         endcase
-        zero = (ALUResult == 0);
     end
 
 endmodule
@@ -100,13 +96,13 @@ module alucontroller(
 );
     logic[(`WORD - 1):0] forwardsrc1, forwardsrc2;
     forwardSrcController forwardSrcController1(
-        .ALUResultM(ALUResultM), .resultW(resultW), .src(rs1),
+        .src1(ALUResultM), .src2(resultW), .src3(rs1),
         .validM(validM), .validW(validW),
         .forward(forward1), .forwardsrc(forwardsrc1)
     );
 
     forwardSrcController forwardSrcController2(
-        .ALUResultM(ALUResultM), .resultW(resultW), .src(rs2),
+        .src1(ALUResultM), .src2(resultW), .src3(rs2),
         .validM(validM), .validW(validW),
         .forward(forward2), .forwardsrc(forwardsrc2)
     );
@@ -134,17 +130,3 @@ module alucontroller(
             end
     endcase
 endmodule
-
-module forwardSrcController(
-    input logic[(`WORD - 1):0] ALUResultM, resultW, src,
-    input logic[1:0] forward,
-    input logic validM, validW,
-
-    output logic[(`WORD - 1):0] forwardsrc
-);
-
-    assign forwardsrc = ((forward == `FORWARD_M) & validM)? ALUResultM :
-                        ((forward == `FORWARD_W) & validW) ? resultW :
-                        src;
-
-endmodule;

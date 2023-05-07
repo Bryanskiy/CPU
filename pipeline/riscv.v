@@ -3,18 +3,18 @@
 module riscv(
     input logic clk, reset
 );
-    logic stallF, stallD, flushE;
+    logic stallF, stallD, flushE, flushD;
     /* fetch stage */
-    logic[(`WORD-1):0] pcD, pcM, instrD;
-    logic PCSrcM;
+    logic[(`WORD-1):0] pcD, pcM, instrD, pcnD;
+    logic PCSrcD;
     logic validD;
     fetch fetch(
         .clk(clk),
-        .reset(reset),
+        .reset(flushD),
         .en(!stallD),
         .stallF(stallF),
-        .pcM(pcM),
-        .PCSrcM(PCSrcM),
+        .pcnD(pcnD),
+        .PCSrcD(controllchangeD),
 
         .pcD(pcD),
         .instrD(instrD),
@@ -25,13 +25,13 @@ module riscv(
     logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE;
     logic[(`REG_SIZE - 1):0] writeRegE, raddr1E, raddr2E, raddr1D, raddr2D;
     logic[3:0] ALUControlE;
-    logic[1:0] ALUSrcE;
-    logic regWriteE, memWriteE, mem2regE;
-    logic branchE;
+    logic[1:0] ALUSrcE, ALUnpcE;
+    logic regWriteE, memWriteE, mem2regE, controllchangeD;
     logic finishE, validE;
 
     logic regWriteW;
     logic[(`WORD-1):0] resultW;
+    logic[1:0] forward1D, forward2D;
     decode decode(
         .clk(clk),
         .reset(flushE),
@@ -41,7 +41,14 @@ module riscv(
         .regWriteW(regWriteW),
         .resultW(resultW),
         .validD(validD),
+        .forward1(forward1D),
+        .forward2(forward2D),
+        .validM(validM),
+        .validW(validW),
+        .ALUResultM(ALUResultM),
 
+        .controllchangeD(controllchangeD),
+        .pcnD(pcnD),
         .rdata1E(rdata1E),
         .rdata2E(rdata2E),
         .raddr1E(raddr1E),
@@ -49,6 +56,7 @@ module riscv(
         .raddr1D(raddr1D),
         .raddr2D(raddr2D),
         .writeRegE(writeRegE),
+        .writeRegM(writeRegM),
         .immE(immE),
         .pcE(pcE),
         .ALUControlE(ALUControlE),
@@ -56,19 +64,17 @@ module riscv(
         .regWriteE(regWriteE),
         .memWriteE(memWriteE),
         .mem2regE(mem2regE),
-        .branchE(branchE),
         .finishE(finishE),
         .validE(validE)
     );
 
     /* execute stage */
-    logic[(`WORD - 1):0] writeDataM, ALUResultM, pcALUM;
+    logic[(`WORD - 1):0] writeDataM, ALUResultM;
     logic[(`REG_SIZE - 1):0] writeRegM;
     logic regWriteM, memWriteM, mem2regM;
-    logic zeroM, branchM;
     logic finishM, validM;
 
-    logic[1:0] forward1, forward2;
+    logic[1:0] forward1E, forward2E;
     execute execute(
         .clk(clk),
         .reset(reset),
@@ -83,11 +89,10 @@ module riscv(
         .regWriteE(regWriteE), 
         .memWriteE(memWriteE), 
         .mem2regE(mem2regE),
-        .branchE(branchE),
         .finishE(finishE),
         .validE(validE),
-        .forward1(forward1),
-        .forward2(forward2),
+        .forward1(forward1E),
+        .forward2(forward2E),
         .resultW(resultW),
         .validW(validW),
 
@@ -95,12 +100,9 @@ module riscv(
         .writeRegM(writeRegM), 
         .ALUResultM(ALUResultM), 
         .pcM(pcM),
-        .pcALUM(pcALUM),
         .regWriteM(regWriteM),
         .memWriteM(memWriteM),
         .mem2regM(mem2regM),
-        .branchM(branchM),
-        .zeroM(zeroM),
         .finishM(finishM),
         .validM(validM)
     );
@@ -120,8 +122,6 @@ module riscv(
         .regWriteM(regWriteM),
         .memWriteM(memWriteM),
         .mem2regM(mem2regM),
-        .zeroM(zeroM),
-        .branchM(branchM),
         .finishM(finishM),
         .validM(validM),
         .pcM(pcM),
@@ -134,7 +134,6 @@ module riscv(
         .regWriteW(regWriteW),
         .mem2regW(mem2regW),
         .memWriteW(memWriteW),
-        .PCSrcM(PCSrcM),
         .finishW(finishW),
         .validW(validW)
     );
@@ -153,12 +152,17 @@ module riscv(
         .raddr1D(raddr1D),
         .raddr2D(raddr2D),
         .writeRegE(writeRegE),
+        .controllchangeD(controllchangeD),
+        .mem2regM(mem2regM),
 
         .stallF(stallF),
         .stallD(stallD),
         .flushE(flushE),
-        .forward1(forward1),
-        .forward2(forward2)
+        .flushD(flushD),
+        .forward1E(forward1E),
+        .forward2E(forward2E),
+        .forward1D(forward1D),
+        .forward2D(forward2D)
     );
 
     /* trace */
