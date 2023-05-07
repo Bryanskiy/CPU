@@ -3,6 +3,7 @@
 module riscv(
     input logic clk, reset
 );
+    logic stallF, stallD, flushE;
     /* fetch stage */
     logic[(`WORD-1):0] pcD, pcM, instrD;
     logic PCSrcM;
@@ -141,7 +142,6 @@ module riscv(
     assign resultW = mem2regW ? readDataW : ALUResultW;
 
     /* hazard */
-    logic stallF, stallD, flushE;
     hazard hazard(
         .raddr1E(raddr1E),
         .raddr2E(raddr2E),
