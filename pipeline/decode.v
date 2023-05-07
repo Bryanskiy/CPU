@@ -1,5 +1,5 @@
 module decode(
-    input logic clk, reset,
+    input logic clk, reset, en,
     /* decode stage logic */
     input logic[(`WORD-1):0] pcD, instrD,
     input logic validD,
@@ -71,7 +71,7 @@ module decode(
         validD, finishD, regWriteD, memWriteD, mem2regD, ALUControlD,
         ALUSrcD, writeRegD, rdata1D, rdata2D, immD, pcD, rs1, rs2
     };
-    flopr #(.WIDTH(DECODE_REG_SIZE)) decodereg(.clk(clk), .reset(reset), .d(decregd), .q(decregq));
+    flopr #(.WIDTH(DECODE_REG_SIZE)) decodereg(.clk(clk), .reset(reset), .en(en), .d(decregd), .q(decregq));
     
     /* output for exec stage */
     assign {

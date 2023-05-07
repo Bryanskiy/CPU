@@ -1,5 +1,5 @@
 module execute(
-    input logic clk, reset,
+    input logic clk, reset, en,
     input logic[(`WORD - 1):0] rdata1E, rdata2E, immE, pcE,
     input logic[(`REG_SIZE - 1):0] writeRegE,    
     input logic[3:0] ALUControlE,
@@ -59,7 +59,7 @@ module execute(
         regWriteE, memWriteE, mem2regE, validE
     };
 
-    flopr #(.WIDTH(EXEC_REG_SIZE)) execreg(.clk(clk), .reset(reset), .d(execregd), .q(execregq));
+    flopr #(.WIDTH(EXEC_REG_SIZE)) execreg(.clk(clk), .reset(reset), .en(en), .d(execregd), .q(execregq));
 
     /* ouput parameters for memory stage */
     assign {

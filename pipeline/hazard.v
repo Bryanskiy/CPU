@@ -21,7 +21,8 @@ module hazard(
         .forward(forward2)
     );
 
-    logic lwstall = mem2regE & ((writeRegE == raddr1D) | (writeRegE == raddr2D));
+    logic lwstall;
+    assign lwstall = mem2regE && ((writeRegE == raddr1D) || (writeRegE == raddr2D));
     assign stallF = lwstall;
     assign stallD = lwstall;
     assign flushE = lwstall;

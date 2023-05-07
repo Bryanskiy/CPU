@@ -10,6 +10,8 @@ module riscv(
     fetch fetch(
         .clk(clk),
         .reset(reset),
+        .en(!stallD),
+        .stallF(stallF),
         .pcM(pcM),
         .PCSrcM(PCSrcM),
 
@@ -31,7 +33,8 @@ module riscv(
     logic[(`WORD-1):0] resultW;
     decode decode(
         .clk(clk),
-        .reset(reset),
+        .reset(flushE),
+        .en(1),
         .pcD(pcD),
         .instrD(instrD),
         .regWriteW(regWriteW),
@@ -68,6 +71,7 @@ module riscv(
     execute execute(
         .clk(clk),
         .reset(reset),
+        .en(1),
         .rdata1E(rdata1E), 
         .rdata2E(rdata2E), 
         .immE(immE), 
@@ -108,6 +112,7 @@ module riscv(
     memory memory(
         .clk(clk),
         .reset(reset),
+        .en(1),
         .writeDataM(writeDataM), 
         .ALUResultM(ALUResultM),
         .writeRegM(writeRegM),
