@@ -33,12 +33,14 @@ module hazard(
         .forward(forward2D)
     );
 
-    logic lwstall;
+    logic lwstall, branchstall;
     assign lwstall = mem2regE && ((writeRegE == raddr1D) || (writeRegE == raddr2D));
-    assign stallF = lwstall;
-    assign stallD = lwstall;
-    assign flushE = lwstall;
-    assign flushD = controllchangeD;
+    assign branchstall = (controllchangeD && (writeRegE != 0) && ((writeRegE == raddr1D) && (writeRegE == raddr2D))) ||
+                         (controllchangeD && (mem2regM != 0) && ((writeRegM == raddr1D) && (writeRegM == raddr2D)));
+    assign stallF = lwstall || branchstall;
+    assign stallD = lwstall || branchstall;
+    assign flushE = lwstall || branchstall;
+    assign flushD = !branchstall && !lwstall && controllchangeD;
 endmodule
 
 module forvard(

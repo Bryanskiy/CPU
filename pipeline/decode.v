@@ -19,6 +19,7 @@ module decode(
     output logic regWriteE, memWriteE, mem2regE, controllchangeD,
     output logic finishE, validE
 );
+    /* verilator lint_off UNOPTFLAT */
     /* instruction decode */
     logic regWriteD, memWriteD, mem2regD;
     logic branchD, jumpD;
@@ -73,8 +74,8 @@ module decode(
 
     /* pc for branches/jumps */
     logic[(`WORD - 1):0] forwardsrc1, forwardsrc2;
-    assign forwardsrc1 = ((forward1 == `FORWARD_M) & validM)? rdata1D : ALUResultM;
-    assign forwardsrc2 = ((forward2 == `FORWARD_M) & validM)? rdata2D : ALUResultM;
+    assign forwardsrc1 = ((forward1 == `FORWARD_M) & validM) & validD ? ALUResultM : rdata1D;
+    assign forwardsrc2 = ((forward2 == `FORWARD_M) & validM) & validD ? ALUResultM : rdata2D;
 
     logic zeroD;
     assign zeroD = forwardsrc1 < forwardsrc2;

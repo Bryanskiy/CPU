@@ -179,7 +179,7 @@ module riscv(
                 $display("M[0x%0h]=0x%0h", ALUResultW, writeDataW);
         
             /* TODO: better npc */
-            $display("PC=0x%0h", pcW + 4);
+            $display("PC=0x%0h", validM ? pcM : pcE);
         end
         if (finishW)
             $finish;
