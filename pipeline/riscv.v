@@ -45,7 +45,8 @@ module riscv(
         .forward2(forward2D),
         .validM(validM),
         .validW(validW),
-        .ALUResultM(ALUResultM),
+        .ALUResultM(readDataM),
+        .writeRegW(writeRegW),
 
         .controllchangeD(controllchangeD),
         .pcnD(pcnD),
@@ -108,7 +109,7 @@ module riscv(
     );
 
     /* memory stage */
-    logic[(`WORD - 1):0] readDataW, ALUResultW, pcW, writeDataW;
+    logic[(`WORD - 1):0] readDataW, ALUResultW, pcW, writeDataW, readDataM;
     logic[(`REG_SIZE - 1):0] writeRegW;
     logic mem2regW, memWriteW;
     logic finishW, validW;
@@ -126,6 +127,7 @@ module riscv(
         .validM(validM),
         .pcM(pcM),
 
+        .readDataM(readDataM),
         .readDataW(readDataW),
         .ALUResultW(ALUResultW),
         .writeRegW(writeRegW),

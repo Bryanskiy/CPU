@@ -5,6 +5,7 @@ module decode(
     input logic validD,
     /* write back stage logic */
     input logic regWriteW,
+    logic[(`REG_SIZE - 1):0] writeRegW,
     input logic[(`WORD - 1):0] resultW,
 
     /* bypass */
@@ -65,7 +66,7 @@ module decode(
         .clk(clk),
         .raddr1(rs1),
         .raddr2(rs2),
-        .raddr3(rd),
+        .raddr3(writeRegW),
         .wdata(resultW),
         .regWrite(regWriteW),
         .rdata1(rdata1D),
@@ -80,9 +81,10 @@ module decode(
     logic zeroD;
     assign zeroD = forwardsrc1 < forwardsrc2;
     assign controllchangeD = (zeroD & branchD) || jumpD;
-    assign pcnD = (ALUnpcD == `ALU_NPC_JALR) ? forwardsrc1 + immD:
-                    (ALUnpcD == `ALU_NPC_4) ? pcD + 4:
-                    pcD + immD;
+    assign pcnD = (ALUnpcD == `ALU_NPC_JALR)   ? forwardsrc1 + immD:
+                  (ALUnpcD == `ALU_NPC_4)      ? pcD + 4:
+                  (ALUnpcD == `ALU_NPC_BRANCH) ? zeroD ? pcD + immD: pcD + 4:
+                   pcD + immD;
 
     /* decode register */
     localparam DECODE_REG_SIZE = 4 * `WORD + 11 + 3 * `REG_SIZE; // size of output module params 

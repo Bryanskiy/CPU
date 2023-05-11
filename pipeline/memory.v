@@ -7,7 +7,7 @@ module memory
     input logic regWriteM, memWriteM, mem2regM,
     input logic finishM, validM,
 
-    output logic[(`WORD - 1):0] readDataW, ALUResultW, pcW, writeDataW,
+    output logic[(`WORD - 1):0] readDataW, ALUResultW, pcW, writeDataW, readDataM,
     output logic[(`REG_SIZE - 1):0] writeRegW,
     output logic regWriteW, mem2regW, memWriteW,
     output logic finishW, validW
@@ -18,7 +18,7 @@ module memory
     always_ff @(posedge clk) begin
         if (memWriteM) RAM[address] <= writeDataM;
     end
-    logic[(`WORD - 1):0] readDataM = RAM[address];
+    assign readDataM = RAM[address];
 
     /* memory register */
     localparam MEM_REG_SIZE = 4 * `WORD + `REG_SIZE + 5; // size of output module params 
